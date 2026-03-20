@@ -2,8 +2,10 @@ import { describe, expect, it, vi } from "vitest";
 import type { OpenClawConfig } from "../../../config/config.js";
 import { resolveOllamaBaseUrlForRun } from "../../ollama-stream.js";
 import {
+  EmbeddedAttemptProfiler,
   buildAfterTurnLegacyCompactionParams,
   composeSystemPromptWithHookContext,
+  formatAttemptProfileTimestampForFilename,
   isOllamaCompatProvider,
   prependSystemPromptAddition,
   resolveAttemptFsWorkspaceOnly,
@@ -12,6 +14,7 @@ import {
   resolvePromptModeForSession,
   shouldInjectOllamaCompatNumCtx,
   decodeHtmlEntitiesInObject,
+  wrapStreamFnProfile,
   wrapOllamaCompatNumCtx,
   wrapStreamFnTrimToolCallNames,
 } from "./attempt.js";
@@ -424,6 +427,73 @@ describe("wrapStreamFnTrimToolCallNames", () => {
   });
 });
 
+describe("wrapStreamFnProfile", () => {
+  function createProfiledStream(params: { events: unknown[]; resultMessage: unknown }) {
+    return {
+      async result() {
+        return params.resultMessage;
+      },
+      [Symbol.asyncIterator]() {
+        return (async function* () {
+          for (const event of params.events) {
+            yield event;
+          }
+        })();
+      },
+    };
+  }
+
+  it("records a model-call span and marks first chunk delivery", async () => {
+    const profiler = new EmbeddedAttemptProfiler({
+      runId: "run-1",
+      sessionId: "session-1",
+      provider: "openai",
+      modelId: "gpt-test",
+    });
+    const baseFn = vi.fn(() =>
+      createProfiledStream({
+        events: [{ type: "text_delta", text: "hi" }],
+        resultMessage: { role: "assistant", content: "done" },
+      }),
+    );
+
+    const wrapped = wrapStreamFnProfile(baseFn as never, {
+      profiler,
+      provider: "openai",
+      modelId: "gpt-test",
+      modelApi: "openai-responses",
+    });
+    const stream = await wrapped(
+      {} as never,
+      { messages: [{ role: "user" }] } as never,
+      {} as never,
+    );
+
+    for await (const _event of stream) {
+      // consume
+    }
+    await stream.result();
+
+    const profile = profiler.finish();
+    expect(profile.spans).toHaveLength(1);
+    expect(profile.spans[0]?.name).toBe("pi.model_call");
+    expect(profile.spans[0]?.status).toBe("ok");
+    expect(profile.spans[0]?.attrs).toMatchObject({
+      callIndex: 1,
+      provider: "openai",
+      modelId: "gpt-test",
+      modelApi: "openai-responses",
+      inputMessages: 1,
+      firstChunkSeen: true,
+    });
+    expect(profile.spans[0]?.details).toMatchObject({
+      inputMessages: [{ role: "user" }],
+    });
+    expect(profile.spans[0]?.attrs?.firstChunkLatencyMs).toEqual(expect.any(Number));
+    expect("events" in profile).toBe(false);
+  });
+});
+
 describe("isOllamaCompatProvider", () => {
   it("detects native ollama provider id", () => {
     expect(
@@ -635,6 +705,14 @@ describe("prependSystemPromptAddition", () => {
     });
 
     expect(result).toBe("base system");
+  });
+});
+
+describe("formatAttemptProfileTimestampForFilename", () => {
+  it("renders a UTC timestamp prefix that sorts lexicographically", () => {
+    expect(formatAttemptProfileTimestampForFilename(Date.UTC(2026, 2, 11, 4, 15, 30, 123))).toBe(
+      "20260311-041530-123",
+    );
   });
 });
 

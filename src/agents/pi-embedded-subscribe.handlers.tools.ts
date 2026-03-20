@@ -218,6 +218,8 @@ export async function handleToolExecutionStart(
   ctx.log.debug(
     `embedded run tool start: runId=${ctx.params.runId} tool=${toolName} toolCallId=${toolCallId}`,
   );
+  ctx.profileEvent("pi.tool.start", { toolName, toolCallId });
+  ctx.profileStartTool(toolCallId, { toolName, toolCallId });
 
   const shouldEmitToolEvents = ctx.shouldEmitToolResult();
   emitAgentEvent({
@@ -281,6 +283,8 @@ export function handleToolExecutionUpdate(
   const toolCallId = String(evt.toolCallId);
   const partial = evt.partialResult;
   const sanitized = sanitizeToolResult(partial);
+  ctx.profileEvent("pi.tool.update", { toolName, toolCallId });
+  ctx.profileUpdateTool(toolCallId, { toolName, toolCallId });
   emitAgentEvent({
     runId: ctx.params.runId,
     stream: "tool",
@@ -399,6 +403,16 @@ export async function handleToolExecutionEnd(
   if (!isToolError && toolName === "cron" && isCronAddAction(startData?.args)) {
     ctx.state.successfulCronAdds += 1;
   }
+  ctx.profileEvent("pi.tool.end", {
+    toolName,
+    toolCallId,
+    isError: isToolError,
+  });
+  ctx.profileEndTool(toolCallId, isToolError ? "error" : "ok", {
+    toolName,
+    toolCallId,
+    isError: isToolError,
+  });
 
   emitAgentEvent({
     runId: ctx.params.runId,

@@ -11,6 +11,7 @@ export {
 
 export function handleAgentStart(ctx: EmbeddedPiSubscribeContext) {
   ctx.log.debug(`embedded run agent start: runId=${ctx.params.runId}`);
+  ctx.profileEvent("pi.agent.start");
   emitAgentEvent({
     runId: ctx.params.runId,
     stream: "lifecycle",
@@ -40,6 +41,7 @@ export function handleAgentEnd(ctx: EmbeddedPiSubscribeContext) {
     ctx.log.warn(
       `embedded run agent end: runId=${ctx.params.runId} isError=true error=${errorText}`,
     );
+    ctx.profileEvent("pi.agent.error", { error: true });
     emitAgentEvent({
       runId: ctx.params.runId,
       stream: "lifecycle",
@@ -58,6 +60,7 @@ export function handleAgentEnd(ctx: EmbeddedPiSubscribeContext) {
     });
   } else {
     ctx.log.debug(`embedded run agent end: runId=${ctx.params.runId} isError=${isError}`);
+    ctx.profileEvent("pi.agent.end", { error: false });
     emitAgentEvent({
       runId: ctx.params.runId,
       stream: "lifecycle",

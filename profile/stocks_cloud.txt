@@ -1,0 +1,420 @@
+File: /Users/jiayinkralik/.openclaw/logs/cache-trace.jsonl
+Parsed lines: 3069 (errors: 0)
+Matched runs: 1
+
+============================================================
+RUN SUMMARY
+- runId: cd2ec23c-4b08-4ed7-bcc1-5531661491f1
+- sessionId: 6555980e-8d24-4563-8763-cfdbf7965f17
+- model: anthropic/claude-opus-4-6
+- window: 2026-03-04T06:21:20.025Z -> 2026-03-04T06:24:43.348Z (3m 23.3s)
+- messages: 65 {"user":13,"assistant":28,"toolResult":24}
+- context sizes: system=23,913 history=66,501 prompt=211 chars
+- tokens: prompt=470,984 (cache hit 99.997%) output=13,859 cacheWrite=20,798 total=505,641
+- prompt preview: [Tue 2026-03-03 22:21 PST] Analyze google’s stock and suggest whether it’s a better idea to sell or hold the stock based on macroeconomic trends, company fundamentals, etc., and create presentation slides for it
+- last user preview: [Tue 2026-03-03 22:21 PST] Analyze google’s stock and suggest whether it’s a better idea to sell or hold the stock based on macroeconomic trends, company fundamentals, etc., and create presentation slides for it
+- final output preview: Done! The presentation is saved at **`~/Desktop/openclaw/GOOGL_Analysis_Mar2026.pptx`** — you can open it in PowerPoint, Keynote, or Google Slides. Here's what's in it (8 slides, dark theme): 1. **Title** — GOOGL: Hold, Sell, or Double Down? 2. **At a Glance*…
+
+PHASE BREAKDOWN
+- session.load: 2ms (#1 -> #2)
+- session.sanitize: 3ms (#2 -> #3)
+- session.limit: 4ms (#3 -> #4)
+- prompt.build: 6ms (#4 -> #6)
+
+WORKFLOW (agent loops: stream:context -> next stream:context)
+- time accounting: model=1m 37.2s (47.8%) tools=14.94s (7.3%) overhead=1m 31.1s (44.8%)
+- #1 @ +15ms (7.13s): produce_user_reply assistant_text | prefill=2.41s stream=468ms chunks=14 maxGap=452ms | tools=ollama_web_search(772ms) -> ollama_web_search(1.04s) -> ollama_web_search(837ms) overhead=1.60s
+    - gap: MODEL_PREFILL stream:context -> response:assistant 2.41s (#6->#7)
+    - gap: MODEL_TO_TOOL_DISPATCH response:assistant -> tool:start 1.58s (#20->#21)
+    - gap: TOOL_LATENCY tool:start -> tool:result 1.04s (#23->#24)
+- #2 @ +7.15s (7.51s): decide_tool tool_call:ollama_web_search | decision=4.55s | tools=ollama_web_search(855ms) -> ollama_web_search(1.15s) -> ollama_web_search(927ms) overhead=31ms
+    - gap: MODEL_DECISION stream:context -> tool:start 4.55s (#27->#28)
+    - gap: TOOL_LATENCY tool:start -> tool:result 1.15s (#30->#31)
+    - gap: TOOL_LATENCY tool:start -> tool:result 927ms (#32->#33)
+- #3 @ +14.66s (4.71s): decide_tool tool_call:ollama_web_search | decision=3.12s | tools=ollama_web_search(683ms) -> ollama_web_search(891ms) overhead=17ms
+    - gap: MODEL_DECISION stream:context -> tool:start 3.12s (#34->#35)
+    - gap: TOOL_LATENCY tool:start -> tool:result 891ms (#37->#38)
+    - gap: TOOL_LATENCY tool:start -> tool:result 683ms (#35->#36)
+- #4 @ +19.37s (5.18s): produce_user_reply assistant_text | prefill=1.75s stream=471ms chunks=9 maxGap=453ms | tools=exec(2.17s) overhead=800ms
+    - gap: TOOL_LATENCY tool:start -> tool:update 2.17s (#49->#50)
+    - gap: MODEL_PREFILL stream:context -> response:assistant 1.75s (#39->#40)
+    - gap: MODEL_TO_TOOL_DISPATCH response:assistant -> tool:start 798ms (#48->#49)
+- #5 @ +24.55s (3.01s): decide_tool tool_call:exec | decision=2.55s | tools=exec(456ms) overhead=1ms
+    - gap: MODEL_DECISION stream:context -> tool:start 2.55s (#52->#53)
+- #6 @ +27.56s (5.82s): decide_tool tool_call:exec | decision=3.29s | tools=exec(2.53s) overhead=2ms
+    - gap: MODEL_DECISION stream:context -> tool:start 3.29s (#56->#57)
+    - gap: TOOL_LATENCY tool:start -> tool:update 2.53s (#57->#58)
+- #7 @ +33.39s (1m 31.3s): produce_user_reply assistant_text | prefill=2.22s stream=486ms chunks=5 maxGap=474ms | tools=write(25ms) overhead=1m 28.6s
+    - gap: MODEL_TO_TOOL_DISPATCH response:assistant -> tool:start 1m 28.6s (#65->#66)
+    - gap: MODEL_PREFILL stream:context -> response:assistant 2.22s (#60->#61)
+- #8 @ +2m 4.7s (59.52s): decide_tool tool_call:write | decision=59.51s | tools=write(11ms) overhead=6ms
+    - gap: MODEL_DECISION stream:context -> tool:start 59.51s (#68->#69)
+- #9 @ +3m 4.2s (5.09s): decide_tool tool_call:exec | decision=2.53s | tools=exec(2.55s) overhead=1ms
+    - gap: TOOL_LATENCY tool:start -> tool:update 2.54s (#72->#73)
+    - gap: MODEL_DECISION stream:context -> tool:start 2.53s (#71->#72)
+- #10 @ +3m 9.3s (4.42s): decide_tool tool_call:exec | decision=4.38s | tools=exec(36ms) overhead=3ms
+    - gap: MODEL_DECISION stream:context -> tool:start 4.38s (#75->#76)
+- #11 @ +3m 13.7s (9.58s): produce_user_reply assistant_text | prefill=1.63s stream=7.86s chunks=134 maxGap=537ms | tools=none overhead=86ms
+    - gap: MODEL_PREFILL stream:context -> response:assistant 1.63s (#79->#80)
+    - gap: MODEL_STREAMING response:assistant -> response:assistant 537ms (#167->#168)
+    - gap: MODEL_STREAMING response:assistant -> response:assistant 533ms (#127->#128)
+
+TOOLS (chronological)
+- +4.47s ollama_web_search toolu_013WWXqZneRJ78dnoqzTam8R: 772ms | status=ok | updates=0 | loop=1
+  meta: Google GOOGL stock price March 2026
+- +5.25s ollama_web_search toolu_01LpS2FvnLXjSov3PntEXF9U: 1.04s | status=ok | updates=0 | loop=1
+  meta: Alphabet Google Q4 2025 earnings results revenue profit
+- +6.30s ollama_web_search toolu_01T9JN6E89NogePH47HZB9mr: 837ms | status=ok | updates=0 | loop=1
+  meta: Google stock analyst rating 2026 buy sell hold
+- +11.69s ollama_web_search toolu_01YKxsSj45tjTe6m3iqrTbnU: 855ms | status=ok | updates=0 | loop=2
+  meta: Google AI Gemini competitive position 2026 risks antitrust
+- +12.56s ollama_web_search toolu_01U7MTYZHsKJ8LitKS77xKvR: 1.15s | status=ok | updates=0 | loop=2
+  meta: US macroeconomic outlook March 2026 recession interest rates Iran war impact stocks
+- +13.72s ollama_web_search toolu_01Re41TPmnFoZPFWjgnVTJBs: 927ms | status=ok | updates=0 | loop=2
+  meta: Google Cloud growth 2025 2026 market share vs AWS Azure
+- +17.78s ollama_web_search toolu_01JuHyW8mU19iZSL86BHxiCQ: 683ms | status=ok | updates=0 | loop=3
+  meta: Alphabet Google antitrust ruling remedy 2026 Chrome breakup
+- +18.47s ollama_web_search toolu_016oitwDbtBtWDMECXHD19q1: 891ms | status=ok | updates=0 | loop=3
+  meta: Google YouTube ads revenue growth 2025 2026
+- +22.39s exec toolu_013guFzEC6oi5yVzBNUKK59f: 2.17s | status=ok | updates=1 | loop=4
+  meta: pip3 install python-pptx 2>&1 | tail -3
+- +27.11s exec toolu_01QmrDrYBvk59is6n2WxPNB9: 456ms | status=ok | updates=1 | loop=5
+  meta: pip3 install --user python-pptx 2>&1 | tail -3
+- +30.86s exec toolu_011EoJaHxV8QPNdJAHSPPUF8: 2.53s | status=ok | updates=1 | loop=6
+  meta: pip3 install --break-system-packages python-pptx 2>&1 | tail -3
+- +2m 4.7s write toolu_01CJnddP2wBtu3dkNN94MyzM: 25ms | status=error | updates=0 | loop=7
+  meta: to ~/Desktop/openclaw/create_googl_deck.py (17339 chars)
+- +3m 4.2s write toolu_01656nY3U9akoqwTbgg7eVTA: 11ms | status=ok | updates=0 | loop=8
+  meta: to ~/.openclaw/workspace/create_googl_deck.py (17066 chars)
+- +3m 6.8s exec toolu_016r2C2x9PDrKyU5GTVLmPFv: 2.55s | status=ok | updates=1 | loop=9
+  meta: run python3 ~/.openclaw/workspace/create_googl_deck.py `python3 ~/.openclaw/workspace/create_googl_deck.py`
+- +3m 13.7s exec toolu_012vFNxQ9TiytrJZgpr9JGfp: 36ms | status=ok | updates=1 | loop=10
+  meta: list files in ~/Desktop/openclaw/GOOGL_Analysis_Mar2026.pptx `ls -lh ~/Desktop/openclaw/GOOGL_Analysis_Mar2026.pptx`
+
+TOOLS (slowest 8)
+- exec toolu_016r2C2x9PDrKyU5GTVLmPFv: 2.55s | status=ok | loop=9
+- exec toolu_011EoJaHxV8QPNdJAHSPPUF8: 2.53s | status=ok | loop=6
+- exec toolu_013guFzEC6oi5yVzBNUKK59f: 2.17s | status=ok | loop=4
+- ollama_web_search toolu_01U7MTYZHsKJ8LitKS77xKvR: 1.15s | status=ok | loop=2
+- ollama_web_search toolu_01LpS2FvnLXjSov3PntEXF9U: 1.04s | status=ok | loop=1
+- ollama_web_search toolu_01Re41TPmnFoZPFWjgnVTJBs: 927ms | status=ok | loop=2
+- ollama_web_search toolu_016oitwDbtBtWDMECXHD19q1: 891ms | status=ok | loop=3
+- ollama_web_search toolu_01YKxsSj45tjTe6m3iqrTbnU: 855ms | status=ok | loop=2
+
+LLM CALLS (from stream:context)
+- LLM#1: produce_user_reply assistant_text | ttft=2.41s stream=468ms chunks=14 maxGap=452ms | modelActive=2.88s | loopWall=7.13s | msgs=65 hist=66,501c
+- LLM#2: decide_tool tool_call:ollama_web_search | decision=4.55s | modelActive=4.55s | loopWall=7.51s | msgs=69 hist=73,567c
+- LLM#3: decide_tool tool_call:ollama_web_search | decision=3.12s | modelActive=3.12s | loopWall=4.71s | msgs=73 hist=81,348c
+- LLM#4: produce_user_reply assistant_text | ttft=1.75s stream=471ms chunks=9 maxGap=453ms | modelActive=2.22s | loopWall=5.18s | msgs=76 hist=86,354c
+- LLM#5: decide_tool tool_call:exec | decision=2.55s | modelActive=2.55s | loopWall=3.01s | msgs=78 hist=86,770c
+- LLM#6: decide_tool tool_call:exec | decision=3.29s | modelActive=3.29s | loopWall=5.82s | msgs=80 hist=87,133c
+- LLM#7: produce_user_reply assistant_text | ttft=2.22s stream=486ms chunks=5 maxGap=474ms | modelActive=2.71s | loopWall=1m 31.3s | msgs=82 hist=87,363c
+- LLM#8: decide_tool tool_call:write | decision=59.51s | modelActive=59.51s | loopWall=59.52s | msgs=84 hist=104,988c
+- LLM#9: decide_tool tool_call:exec | decision=2.53s | modelActive=2.53s | loopWall=5.09s | msgs=86 hist=122,253c
+- LLM#10: decide_tool tool_call:exec | decision=4.38s | modelActive=4.38s | loopWall=4.42s | msgs=88 hist=122,438c
+- LLM#11: produce_user_reply assistant_text | ttft=1.63s stream=7.86s chunks=134 maxGap=537ms | modelActive=9.49s | loopWall=9.58s | msgs=90 hist=122,653c
+
+CONTEXT EVOLUTION (at each stream:context)
+- LLM#1: msgs=65 histChars=66,501 roles=["user","assistant","toolResult","toolResult","assistant","toolResult","assistant","toolResult","assistant","toolResult","assistant","toolResult","assistant","user","assistant","toolResult","assistant","toolResult","assistant","toolResult","assistant","toolResult","toolResult","toolResult","assistant","toolResult","assistant","toolResult","assistant","toolResult","assistant","toolResult","assistant","toolResult","user","assistant","user","assistant","user","assistant","toolResult","toolResult","user","assistant","user","assistant","toolResult","toolResult","user","assistant","user","assistant","user","assistant","user","assistant","user","assistant","toolResult","assistant","toolResult","assistant","toolResult","assistant","user"]
+- LLM#2: msgs=69 (Δ+4) histChars=73,567 (Δ+7,066) roles=["user","assistant","toolResult","toolResult","assistant","toolResult","assistant","toolResult","assistant","toolResult","assistant","toolResult","assistant","user","assistant","toolResult","assistant","toolResult","assistant","toolResult","assistant","toolResult","toolResult","toolResult","assistant","toolResult","assistant","toolResult","assistant","toolResult","assistant","toolResult","assistant","toolResult","user","assistant","user","assistant","user","assistant","toolResult","toolResult","user","assistant","user","assistant","toolResult","toolResult","user","assistant","user","assistant","user","assistant","user","assistant","user","assistant","toolResult","assistant","toolResult","assistant","toolResult","assistant","user","assistant","toolResult","toolResult","toolResult"]
+- LLM#3: msgs=73 (Δ+4) histChars=81,348 (Δ+7,781) roles=["user","assistant","toolResult","toolResult","assistant","toolResult","assistant","toolResult","assistant","toolResult","assistant","toolResult","assistant","user","assistant","toolResult","assistant","toolResult","assistant","toolResult","assistant","toolResult","toolResult","toolResult","assistant","toolResult","assistant","toolResult","assistant","toolResult","assistant","toolResult","assistant","toolResult","user","assistant","user","assistant","user","assistant","toolResult","toolResult","user","assistant","user","assistant","toolResult","toolResult","user","assistant","user","assistant","user","assistant","user","assistant","user","assistant","toolResult","assistant","toolResult","assistant","toolResult","assistant","user","assistant","toolResult","toolResult","toolResult","assistant","toolResult","toolResult","toolResult"]
+- LLM#4: msgs=76 (Δ+3) histChars=86,354 (Δ+5,006) roles=["user","assistant","toolResult","toolResult","assistant","toolResult","assistant","toolResult","assistant","toolResult","assistant","toolResult","assistant","user","assistant","toolResult","assistant","toolResult","assistant","toolResult","assistant","toolResult","toolResult","toolResult","assistant","toolResult","assistant","toolResult","assistant","toolResult","assistant","toolResult","assistant","toolResult","user","assistant","user","assistant","user","assistant","toolResult","toolResult","user","assistant","user","assistant","toolResult","toolResult","user","assistant","user","assistant","user","assistant","user","assistant","user","assistant","toolResult","assistant","toolResult","assistant","toolResult","assistant","user","assistant","toolResult","toolResult","toolResult","assistant","toolResult","toolResult","toolResult","assistant","toolResult","toolResult"]
+- LLM#5: msgs=78 (Δ+2) histChars=86,770 (Δ+416) roles=["user","assistant","toolResult","toolResult","assistant","toolResult","assistant","toolResult","assistant","toolResult","assistant","toolResult","assistant","user","assistant","toolResult","assistant","toolResult","assistant","toolResult","assistant","toolResult","toolResult","toolResult","assistant","toolResult","assistant","toolResult","assistant","toolResult","assistant","toolResult","assistant","toolResult","user","assistant","user","assistant","user","assistant","toolResult","toolResult","user","assistant","user","assistant","toolResult","toolResult","user","assistant","user","assistant","user","assistant","user","assistant","user","assistant","toolResult","assistant","toolResult","assistant","toolResult","assistant","user","assistant","toolResult","toolResult","toolResult","assistant","toolResult","toolResult","toolResult","assistant","toolResult","toolResult","assistant","toolResult"]
+- LLM#6: msgs=80 (Δ+2) histChars=87,133 (Δ+363) roles=["user","assistant","toolResult","toolResult","assistant","toolResult","assistant","toolResult","assistant","toolResult","assistant","toolResult","assistant","user","assistant","toolResult","assistant","toolResult","assistant","toolResult","assistant","toolResult","toolResult","toolResult","assistant","toolResult","assistant","toolResult","assistant","toolResult","assistant","toolResult","assistant","toolResult","user","assistant","user","assistant","user","assistant","toolResult","toolResult","user","assistant","user","assistant","toolResult","toolResult","user","assistant","user","assistant","user","assistant","user","assistant","user","assistant","toolResult","assistant","toolResult","assistant","toolResult","assistant","user","assistant","toolResult","toolResult","toolResult","assistant","toolResult","toolResult","toolResult","assistant","toolResult","toolResult","assistant","toolResult","assistant","toolResult"]
+- LLM#7: msgs=82 (Δ+2) histChars=87,363 (Δ+230) roles=["user","assistant","toolResult","toolResult","assistant","toolResult","assistant","toolResult","assistant","toolResult","assistant","toolResult","assistant","user","assistant","toolResult","assistant","toolResult","assistant","toolResult","assistant","toolResult","toolResult","toolResult","assistant","toolResult","assistant","toolResult","assistant","toolResult","assistant","toolResult","assistant","toolResult","user","assistant","user","assistant","user","assistant","toolResult","toolResult","user","assistant","user","assistant","toolResult","toolResult","user","assistant","user","assistant","user","assistant","user","assistant","user","assistant","toolResult","assistant","toolResult","assistant","toolResult","assistant","user","assistant","toolResult","toolResult","toolResult","assistant","toolResult","toolResult","toolResult","assistant","toolResult","toolResult","assistant","toolResult","assistant","toolResult","assistant","toolResult"]
+- LLM#8: msgs=84 (Δ+2) histChars=104,988 (Δ+17,625) roles=["user","assistant","toolResult","toolResult","assistant","toolResult","assistant","toolResult","assistant","toolResult","assistant","toolResult","assistant","user","assistant","toolResult","assistant","toolResult","assistant","toolResult","assistant","toolResult","toolResult","toolResult","assistant","toolResult","assistant","toolResult","assistant","toolResult","assistant","toolResult","assistant","toolResult","user","assistant","user","assistant","user","assistant","toolResult","toolResult","user","assistant","user","assistant","toolResult","toolResult","user","assistant","user","assistant","user","assistant","user","assistant","user","assistant","toolResult","assistant","toolResult","assistant","toolResult","assistant","user","assistant","toolResult","toolResult","toolResult","assistant","toolResult","toolResult","toolResult","assistant","toolResult","toolResult","assistant","toolResult","assistant","toolResult","assistant","toolResult","assistant","toolResult"]
+- LLM#9: msgs=86 (Δ+2) histChars=122,253 (Δ+17,265) roles=["user","assistant","toolResult","toolResult","assistant","toolResult","assistant","toolResult","assistant","toolResult","assistant","toolResult","assistant","user","assistant","toolResult","assistant","toolResult","assistant","toolResult","assistant","toolResult","toolResult","toolResult","assistant","toolResult","assistant","toolResult","assistant","toolResult","assistant","toolResult","assistant","toolResult","user","assistant","user","assistant","user","assistant","toolResult","toolResult","user","assistant","user","assistant","toolResult","toolResult","user","assistant","user","assistant","user","assistant","user","assistant","user","assistant","toolResult","assistant","toolResult","assistant","toolResult","assistant","user","assistant","toolResult","toolResult","toolResult","assistant","toolResult","toolResult","toolResult","assistant","toolResult","toolResult","assistant","toolResult","assistant","toolResult","assistant","toolResult","assistant","toolResult","assistant","toolResult"]
+- LLM#10: msgs=88 (Δ+2) histChars=122,438 (Δ+185) roles=["user","assistant","toolResult","toolResult","assistant","toolResult","assistant","toolResult","assistant","toolResult","assistant","toolResult","assistant","user","assistant","toolResult","assistant","toolResult","assistant","toolResult","assistant","toolResult","toolResult","toolResult","assistant","toolResult","assistant","toolResult","assistant","toolResult","assistant","toolResult","assistant","toolResult","user","assistant","user","assistant","user","assistant","toolResult","toolResult","user","assistant","user","assistant","toolResult","toolResult","user","assistant","user","assistant","user","assistant","user","assistant","user","assistant","toolResult","assistant","toolResult","assistant","toolResult","assistant","user","assistant","toolResult","toolResult","toolResult","assistant","toolResult","toolResult","toolResult","assistant","toolResult","toolResult","assistant","toolResult","assistant","toolResult","assistant","toolResult","assistant","toolResult","assistant","toolResult","assistant","toolResult"]
+- LLM#11: msgs=90 (Δ+2) histChars=122,653 (Δ+215) roles=["user","assistant","toolResult","toolResult","assistant","toolResult","assistant","toolResult","assistant","toolResult","assistant","toolResult","assistant","user","assistant","toolResult","assistant","toolResult","assistant","toolResult","assistant","toolResult","toolResult","toolResult","assistant","toolResult","assistant","toolResult","assistant","toolResult","assistant","toolResult","assistant","toolResult","user","assistant","user","assistant","user","assistant","toolResult","toolResult","user","assistant","user","assistant","toolResult","toolResult","user","assistant","user","assistant","user","assistant","user","assistant","user","assistant","toolResult","assistant","toolResult","assistant","toolResult","assistant","user","assistant","toolResult","toolResult","toolResult","assistant","toolResult","toolResult","toolResult","assistant","toolResult","toolResult","assistant","toolResult","assistant","toolResult","assistant","toolResult","assistant","toolResult","assistant","toolResult","assistant","toolResult","assistant","toolResult"]
+
+TIME BREAKDOWN (transition-bucketed)
+- MODEL_TO_TOOL_DISPATCH: total=1m 31.0s (44.7%) count=3 max=1m 28.6s at #65 response:assistant -> #66 tool:start
+- MODEL_DECISION: total=1m 19.9s (39.3%) count=7 max=59.51s at #68 stream:context -> #69 tool:start
+- TOOL_LATENCY: total=14.94s (7.3%) count=20 max=2.54s at #72 tool:start -> #73 tool:update
+- MODEL_STREAMING: total=9.29s (4.6%) count=158 max=537ms at #167 response:assistant -> #168 response:assistant
+- MODEL_PREFILL: total=8.01s (3.9%) count=4 max=2.41s at #6 stream:context -> #7 response:assistant
+- WRAP_UP: total=86ms (0.0%) count=2 max=78ms at #213 response:assistant -> #214 session:after
+- TOOL_CHAIN: total=54ms (0.0%) count=5 max=14ms at #29 tool:result -> #30 tool:start
+- TOOL_HANDOFF: total=36ms (0.0%) count=10 max=8ms at #33 tool:result -> #34 stream:context
+- PROMPT_BUILD: total=10ms (0.0%) count=3 max=4ms at #3 session:limited -> #4 prompt:before
+- SESSION: total=5ms (0.0%) count=2 max=3ms at #2 session:sanitized -> #3 session:limited
+
+TOP WAITS (single biggest gaps, top 8)
+- +36.10s MODEL_TO_TOOL_DISPATCH: response:assistant -> tool:start 1m 28.6s (#65->#66) tool=write
+- +2m 4.7s MODEL_DECISION: stream:context -> tool:start 59.51s (#68->#69) tool=write
+- +7.15s MODEL_DECISION: stream:context -> tool:start 4.55s (#27->#28) tool=ollama_web_search
+- +3m 9.3s MODEL_DECISION: stream:context -> tool:start 4.38s (#75->#76) tool=exec
+- +27.56s MODEL_DECISION: stream:context -> tool:start 3.29s (#56->#57) tool=exec
+- +14.66s MODEL_DECISION: stream:context -> tool:start 3.12s (#34->#35) tool=ollama_web_search
+- +24.55s MODEL_DECISION: stream:context -> tool:start 2.55s (#52->#53) tool=exec
+- +3m 6.8s TOOL_LATENCY: tool:start -> tool:update 2.54s (#72->#73)
+
+COMPRESSED PATH (same-class spans merged)
+- SESSION: 5ms across 2 transition(s) (#1->#3)
+- PROMPT_BUILD: 10ms across 3 transition(s) (#3->#6)
+- MODEL_PREFILL: 2.41s across 1 transition(s) (#6->#7)
+- MODEL_STREAMING: 468ms across 9 transition(s) (#7->#19)
+- MODEL_TO_TOOL_DISPATCH: 1.58s across 1 transition(s) (#20->#21)
+- TOOL_LATENCY: 772ms across 1 transition(s) (#21->#22)
+- TOOL_CHAIN: 9ms across 1 transition(s) (#22->#23)
+- TOOL_LATENCY: 1.04s across 1 transition(s) (#23->#24)
+- TOOL_CHAIN: 11ms across 1 transition(s) (#24->#25)
+- TOOL_LATENCY: 837ms across 1 transition(s) (#25->#26)
+- TOOL_HANDOFF: 6ms across 1 transition(s) (#26->#27)
+- MODEL_DECISION: 4.55s across 1 transition(s) (#27->#28)
+- TOOL_LATENCY: 855ms across 1 transition(s) (#28->#29)
+- TOOL_CHAIN: 14ms across 1 transition(s) (#29->#30)
+- TOOL_LATENCY: 1.15s across 1 transition(s) (#30->#31)
+- TOOL_CHAIN: 9ms across 1 transition(s) (#31->#32)
+- TOOL_LATENCY: 927ms across 1 transition(s) (#32->#33)
+- TOOL_HANDOFF: 8ms across 1 transition(s) (#33->#34)
+- MODEL_DECISION: 3.12s across 1 transition(s) (#34->#35)
+- TOOL_LATENCY: 683ms across 1 transition(s) (#35->#36)
+- TOOL_CHAIN: 11ms across 1 transition(s) (#36->#37)
+- TOOL_LATENCY: 891ms across 1 transition(s) (#37->#38)
+- TOOL_HANDOFF: 6ms across 1 transition(s) (#38->#39)
+- MODEL_PREFILL: 1.75s across 1 transition(s) (#39->#40)
+- MODEL_STREAMING: 471ms across 7 transition(s) (#40->#48)
+- MODEL_TO_TOOL_DISPATCH: 798ms across 1 transition(s) (#48->#49)
+- TOOL_LATENCY: 2.17s across 2 transition(s) (#49->#51)
+- TOOL_HANDOFF: 2ms across 1 transition(s) (#51->#52)
+- MODEL_DECISION: 2.55s across 1 transition(s) (#52->#53)
+- TOOL_LATENCY: 456ms across 2 transition(s) (#53->#55)
+- TOOL_HANDOFF: 1ms across 1 transition(s) (#55->#56)
+- MODEL_DECISION: 3.29s across 1 transition(s) (#56->#57)
+- TOOL_LATENCY: 2.53s across 2 transition(s) (#57->#59)
+- TOOL_HANDOFF: 2ms across 1 transition(s) (#59->#60)
+- MODEL_PREFILL: 2.22s across 1 transition(s) (#60->#61)
+- MODEL_STREAMING: 486ms across 3 transition(s) (#61->#65)
+- MODEL_TO_TOOL_DISPATCH: 1m 28.6s across 1 transition(s) (#65->#66)
+- TOOL_LATENCY: 25ms across 1 transition(s) (#66->#67)
+- TOOL_HANDOFF: 1ms across 1 transition(s) (#67->#68)
+- MODEL_DECISION: 59.51s across 1 transition(s) (#68->#69)
+- TOOL_LATENCY: 11ms across 1 transition(s) (#69->#70)
+- TOOL_HANDOFF: 6ms across 1 transition(s) (#70->#71)
+- MODEL_DECISION: 2.53s across 1 transition(s) (#71->#72)
+- TOOL_LATENCY: 2.55s across 2 transition(s) (#72->#74)
+- TOOL_HANDOFF: 1ms across 1 transition(s) (#74->#75)
+- MODEL_DECISION: 4.38s across 1 transition(s) (#75->#76)
+- TOOL_LATENCY: 36ms across 2 transition(s) (#76->#78)
+- TOOL_HANDOFF: 3ms across 1 transition(s) (#78->#79)
+- MODEL_PREFILL: 1.63s across 1 transition(s) (#79->#80)
+- MODEL_STREAMING: 7.86s across 117 transition(s) (#80->#213)
+- WRAP_UP: 86ms across 2 transition(s) (#213->#215)
+
+RAW EVENTS
+- #  1 session:loaded     @ 2026-03-04T06:21:20.025Z (+n/a)
+- #  2 session:sanitized  @ 2026-03-04T06:21:20.027Z (+2ms)
+- #  3 session:limited    @ 2026-03-04T06:21:20.030Z (+3ms)
+- #  4 prompt:before      @ 2026-03-04T06:21:20.034Z (+4ms)
+- #  5 prompt:images      @ 2026-03-04T06:21:20.036Z (+2ms)
+- #  6 stream:context     @ 2026-03-04T06:21:20.040Z (+4ms)
+- #  7 response:assistant @ 2026-03-04T06:21:22.448Z (+2.41s)
+- #  8 response:assistant @ 2026-03-04T06:21:22.455Z (+7ms)
+- #  9 response:assistant @ 2026-03-04T06:21:22.458Z (+3ms)
+- # 10 response:assistant @ 2026-03-04T06:21:22.459Z (+1ms)
+- # 11 response:assistant @ 2026-03-04T06:21:22.460Z (+1ms)
+- # 12 response:assistant @ 2026-03-04T06:21:22.460Z (+0ms)
+- # 13 response:assistant @ 2026-03-04T06:21:22.461Z (+1ms)
+- # 14 response:assistant @ 2026-03-04T06:21:22.461Z (+0ms)
+- # 15 response:assistant @ 2026-03-04T06:21:22.913Z (+452ms)
+- # 16 response:assistant @ 2026-03-04T06:21:22.914Z (+1ms)
+- # 17 response:assistant @ 2026-03-04T06:21:22.915Z (+1ms)
+- # 18 response:assistant @ 2026-03-04T06:21:22.915Z (+0ms)
+- # 19 response:assistant @ 2026-03-04T06:21:22.916Z (+1ms)
+- # 20 response:assistant @ 2026-03-04T06:21:22.916Z (+0ms)
+- # 21 tool:start         @ 2026-03-04T06:21:24.493Z (+1.58s)
+- # 22 tool:result        @ 2026-03-04T06:21:25.265Z (+772ms)
+- # 23 tool:start         @ 2026-03-04T06:21:25.274Z (+9ms)
+- # 24 tool:result        @ 2026-03-04T06:21:26.318Z (+1.04s)
+- # 25 tool:start         @ 2026-03-04T06:21:26.329Z (+11ms)
+- # 26 tool:result        @ 2026-03-04T06:21:27.166Z (+837ms)
+- # 27 stream:context     @ 2026-03-04T06:21:27.172Z (+6ms)
+- # 28 tool:start         @ 2026-03-04T06:21:31.719Z (+4.55s)
+- # 29 tool:result        @ 2026-03-04T06:21:32.574Z (+855ms)
+- # 30 tool:start         @ 2026-03-04T06:21:32.588Z (+14ms)
+- # 31 tool:result        @ 2026-03-04T06:21:33.741Z (+1.15s)
+- # 32 tool:start         @ 2026-03-04T06:21:33.750Z (+9ms)
+- # 33 tool:result        @ 2026-03-04T06:21:34.677Z (+927ms)
+- # 34 stream:context     @ 2026-03-04T06:21:34.685Z (+8ms)
+- # 35 tool:start         @ 2026-03-04T06:21:37.803Z (+3.12s)
+- # 36 tool:result        @ 2026-03-04T06:21:38.486Z (+683ms)
+- # 37 tool:start         @ 2026-03-04T06:21:38.497Z (+11ms)
+- # 38 tool:result        @ 2026-03-04T06:21:39.388Z (+891ms)
+- # 39 stream:context     @ 2026-03-04T06:21:39.394Z (+6ms)
+- # 40 response:assistant @ 2026-03-04T06:21:41.141Z (+1.75s)
+- # 41 response:assistant @ 2026-03-04T06:21:41.594Z (+453ms)
+- # 42 response:assistant @ 2026-03-04T06:21:41.605Z (+11ms)
+- # 43 response:assistant @ 2026-03-04T06:21:41.607Z (+2ms)
+- # 44 response:assistant @ 2026-03-04T06:21:41.609Z (+2ms)
+- # 45 response:assistant @ 2026-03-04T06:21:41.609Z (+0ms)
+- # 46 response:assistant @ 2026-03-04T06:21:41.610Z (+1ms)
+- # 47 response:assistant @ 2026-03-04T06:21:41.611Z (+1ms)
+- # 48 response:assistant @ 2026-03-04T06:21:41.612Z (+1ms)
+- # 49 tool:start         @ 2026-03-04T06:21:42.410Z (+798ms)
+- # 50 tool:update        @ 2026-03-04T06:21:44.575Z (+2.17s)
+- # 51 tool:result        @ 2026-03-04T06:21:44.576Z (+1ms)
+- # 52 stream:context     @ 2026-03-04T06:21:44.578Z (+2ms)
+- # 53 tool:start         @ 2026-03-04T06:21:47.132Z (+2.55s)
+- # 54 tool:update        @ 2026-03-04T06:21:47.587Z (+455ms)
+- # 55 tool:result        @ 2026-03-04T06:21:47.588Z (+1ms)
+- # 56 stream:context     @ 2026-03-04T06:21:47.589Z (+1ms)
+- # 57 tool:start         @ 2026-03-04T06:21:50.884Z (+3.29s)
+- # 58 tool:update        @ 2026-03-04T06:21:53.410Z (+2.53s)
+- # 59 tool:result        @ 2026-03-04T06:21:53.411Z (+1ms)
+- # 60 stream:context     @ 2026-03-04T06:21:53.413Z (+2ms)
+- # 61 response:assistant @ 2026-03-04T06:21:55.635Z (+2.22s)
+- # 62 response:assistant @ 2026-03-04T06:21:56.109Z (+474ms)
+- # 63 response:assistant @ 2026-03-04T06:21:56.120Z (+11ms)
+- # 64 response:assistant @ 2026-03-04T06:21:56.120Z (+0ms)
+- # 65 response:assistant @ 2026-03-04T06:21:56.121Z (+1ms)
+- # 66 tool:start         @ 2026-03-04T06:23:24.715Z (+1m 28.6s)
+- # 67 tool:result        @ 2026-03-04T06:23:24.740Z (+25ms)
+- # 68 stream:context     @ 2026-03-04T06:23:24.741Z (+1ms)
+- # 69 tool:start         @ 2026-03-04T06:24:24.247Z (+59.51s)
+- # 70 tool:result        @ 2026-03-04T06:24:24.258Z (+11ms)
+- # 71 stream:context     @ 2026-03-04T06:24:24.264Z (+6ms)
+- # 72 tool:start         @ 2026-03-04T06:24:26.797Z (+2.53s)
+- # 73 tool:update        @ 2026-03-04T06:24:29.338Z (+2.54s)
+- # 74 tool:result        @ 2026-03-04T06:24:29.351Z (+13ms)
+- # 75 stream:context     @ 2026-03-04T06:24:29.352Z (+1ms)
+- # 76 tool:start         @ 2026-03-04T06:24:33.728Z (+4.38s)
+- # 77 tool:update        @ 2026-03-04T06:24:33.761Z (+33ms)
+- # 78 tool:result        @ 2026-03-04T06:24:33.764Z (+3ms)
+- # 79 stream:context     @ 2026-03-04T06:24:33.767Z (+3ms)
+- # 80 response:assistant @ 2026-03-04T06:24:35.401Z (+1.63s)
+- # 81 response:assistant @ 2026-03-04T06:24:35.912Z (+511ms)
+- # 82 response:assistant @ 2026-03-04T06:24:35.913Z (+1ms)
+- # 83 response:assistant @ 2026-03-04T06:24:35.913Z (+0ms)
+- # 84 response:assistant @ 2026-03-04T06:24:35.914Z (+1ms)
+- # 85 response:assistant @ 2026-03-04T06:24:35.914Z (+0ms)
+- # 86 response:assistant @ 2026-03-04T06:24:35.915Z (+1ms)
+- # 87 response:assistant @ 2026-03-04T06:24:35.916Z (+1ms)
+- # 88 response:assistant @ 2026-03-04T06:24:35.918Z (+2ms)
+- # 89 response:assistant @ 2026-03-04T06:24:36.303Z (+385ms)
+- # 90 response:assistant @ 2026-03-04T06:24:36.306Z (+3ms)
+- # 91 response:assistant @ 2026-03-04T06:24:36.309Z (+3ms)
+- # 92 response:assistant @ 2026-03-04T06:24:36.317Z (+8ms)
+- # 93 response:assistant @ 2026-03-04T06:24:36.320Z (+3ms)
+- # 94 response:assistant @ 2026-03-04T06:24:36.320Z (+0ms)
+- # 95 response:assistant @ 2026-03-04T06:24:36.321Z (+1ms)
+- # 96 response:assistant @ 2026-03-04T06:24:36.321Z (+0ms)
+- # 97 response:assistant @ 2026-03-04T06:24:36.747Z (+426ms)
+- # 98 response:assistant @ 2026-03-04T06:24:36.748Z (+1ms)
+- # 99 response:assistant @ 2026-03-04T06:24:36.751Z (+3ms)
+- #100 response:assistant @ 2026-03-04T06:24:36.753Z (+2ms)
+- #101 response:assistant @ 2026-03-04T06:24:36.753Z (+0ms)
+- #102 response:assistant @ 2026-03-04T06:24:36.754Z (+1ms)
+- #103 response:assistant @ 2026-03-04T06:24:36.756Z (+2ms)
+- #104 response:assistant @ 2026-03-04T06:24:36.756Z (+0ms)
+- #105 response:assistant @ 2026-03-04T06:24:37.246Z (+490ms)
+- #106 response:assistant @ 2026-03-04T06:24:37.246Z (+0ms)
+- #107 response:assistant @ 2026-03-04T06:24:37.248Z (+2ms)
+- #108 response:assistant @ 2026-03-04T06:24:37.249Z (+1ms)
+- #109 response:assistant @ 2026-03-04T06:24:37.251Z (+2ms)
+- #110 response:assistant @ 2026-03-04T06:24:37.252Z (+1ms)
+- #111 response:assistant @ 2026-03-04T06:24:37.252Z (+0ms)
+- #112 response:assistant @ 2026-03-04T06:24:37.253Z (+1ms)
+- #113 response:assistant @ 2026-03-04T06:24:37.750Z (+497ms)
+- #114 response:assistant @ 2026-03-04T06:24:37.753Z (+3ms)
+- #115 response:assistant @ 2026-03-04T06:24:37.754Z (+1ms)
+- #116 response:assistant @ 2026-03-04T06:24:37.755Z (+1ms)
+- #117 response:assistant @ 2026-03-04T06:24:37.756Z (+1ms)
+- #118 response:assistant @ 2026-03-04T06:24:37.756Z (+0ms)
+- #119 response:assistant @ 2026-03-04T06:24:37.758Z (+2ms)
+- #120 response:assistant @ 2026-03-04T06:24:38.135Z (+377ms)
+- #121 response:assistant @ 2026-03-04T06:24:38.138Z (+3ms)
+- #122 response:assistant @ 2026-03-04T06:24:38.139Z (+1ms)
+- #123 response:assistant @ 2026-03-04T06:24:38.140Z (+1ms)
+- #124 response:assistant @ 2026-03-04T06:24:38.141Z (+1ms)
+- #125 response:assistant @ 2026-03-04T06:24:38.144Z (+3ms)
+- #126 response:assistant @ 2026-03-04T06:24:38.144Z (+0ms)
+- #127 response:assistant @ 2026-03-04T06:24:38.146Z (+2ms)
+- #128 response:assistant @ 2026-03-04T06:24:38.679Z (+533ms)
+- #129 response:assistant @ 2026-03-04T06:24:38.680Z (+1ms)
+- #130 response:assistant @ 2026-03-04T06:24:38.682Z (+2ms)
+- #131 response:assistant @ 2026-03-04T06:24:38.683Z (+1ms)
+- #132 response:assistant @ 2026-03-04T06:24:38.685Z (+2ms)
+- #133 response:assistant @ 2026-03-04T06:24:38.686Z (+1ms)
+- #134 response:assistant @ 2026-03-04T06:24:38.687Z (+1ms)
+- #135 response:assistant @ 2026-03-04T06:24:38.688Z (+1ms)
+- #136 response:assistant @ 2026-03-04T06:24:39.137Z (+449ms)
+- #137 response:assistant @ 2026-03-04T06:24:39.144Z (+7ms)
+- #138 response:assistant @ 2026-03-04T06:24:39.145Z (+1ms)
+- #139 response:assistant @ 2026-03-04T06:24:39.147Z (+2ms)
+- #140 response:assistant @ 2026-03-04T06:24:39.148Z (+1ms)
+- #141 response:assistant @ 2026-03-04T06:24:39.149Z (+1ms)
+- #142 response:assistant @ 2026-03-04T06:24:39.149Z (+0ms)
+- #143 response:assistant @ 2026-03-04T06:24:39.150Z (+1ms)
+- #144 response:assistant @ 2026-03-04T06:24:39.521Z (+371ms)
+- #145 response:assistant @ 2026-03-04T06:24:39.523Z (+2ms)
+- #146 response:assistant @ 2026-03-04T06:24:39.524Z (+1ms)
+- #147 response:assistant @ 2026-03-04T06:24:39.531Z (+7ms)
+- #148 response:assistant @ 2026-03-04T06:24:39.532Z (+1ms)
+- #149 response:assistant @ 2026-03-04T06:24:39.534Z (+2ms)
+- #150 response:assistant @ 2026-03-04T06:24:39.535Z (+1ms)
+- #151 response:assistant @ 2026-03-04T06:24:39.535Z (+0ms)
+- #152 response:assistant @ 2026-03-04T06:24:39.969Z (+434ms)
+- #153 response:assistant @ 2026-03-04T06:24:39.972Z (+3ms)
+- #154 response:assistant @ 2026-03-04T06:24:39.972Z (+0ms)
+- #155 response:assistant @ 2026-03-04T06:24:39.973Z (+1ms)
+- #156 response:assistant @ 2026-03-04T06:24:39.974Z (+1ms)
+- #157 response:assistant @ 2026-03-04T06:24:39.974Z (+0ms)
+- #158 response:assistant @ 2026-03-04T06:24:39.976Z (+2ms)
+- #159 response:assistant @ 2026-03-04T06:24:39.977Z (+1ms)
+- #160 response:assistant @ 2026-03-04T06:24:40.414Z (+437ms)
+- #161 response:assistant @ 2026-03-04T06:24:40.417Z (+3ms)
+- #162 response:assistant @ 2026-03-04T06:24:40.419Z (+2ms)
+- #163 response:assistant @ 2026-03-04T06:24:40.420Z (+1ms)
+- #164 response:assistant @ 2026-03-04T06:24:40.421Z (+1ms)
+- #165 response:assistant @ 2026-03-04T06:24:40.422Z (+1ms)
+- #166 response:assistant @ 2026-03-04T06:24:40.423Z (+1ms)
+- #167 response:assistant @ 2026-03-04T06:24:40.424Z (+1ms)
+- #168 response:assistant @ 2026-03-04T06:24:40.961Z (+537ms)
+- #169 response:assistant @ 2026-03-04T06:24:40.984Z (+23ms)
+- #170 response:assistant @ 2026-03-04T06:24:41.004Z (+20ms)
+- #171 response:assistant @ 2026-03-04T06:24:41.024Z (+20ms)
+- #172 response:assistant @ 2026-03-04T06:24:41.028Z (+4ms)
+- #173 response:assistant @ 2026-03-04T06:24:41.035Z (+7ms)
+- #174 response:assistant @ 2026-03-04T06:24:41.047Z (+12ms)
+- #175 response:assistant @ 2026-03-04T06:24:41.089Z (+42ms)
+- #176 response:assistant @ 2026-03-04T06:24:41.358Z (+269ms)
+- #177 response:assistant @ 2026-03-04T06:24:41.359Z (+1ms)
+- #178 response:assistant @ 2026-03-04T06:24:41.360Z (+1ms)
+- #179 response:assistant @ 2026-03-04T06:24:41.361Z (+1ms)
+- #180 response:assistant @ 2026-03-04T06:24:41.362Z (+1ms)
+- #181 response:assistant @ 2026-03-04T06:24:41.363Z (+1ms)
+- #182 response:assistant @ 2026-03-04T06:24:41.363Z (+0ms)
+- #183 response:assistant @ 2026-03-04T06:24:41.848Z (+485ms)
+- #184 response:assistant @ 2026-03-04T06:24:41.857Z (+9ms)
+- #185 response:assistant @ 2026-03-04T06:24:41.859Z (+2ms)
+- #186 response:assistant @ 2026-03-04T06:24:41.861Z (+2ms)
+- #187 response:assistant @ 2026-03-04T06:24:41.862Z (+1ms)
+- #188 response:assistant @ 2026-03-04T06:24:41.863Z (+1ms)
+- #189 response:assistant @ 2026-03-04T06:24:41.864Z (+1ms)
+- #190 response:assistant @ 2026-03-04T06:24:41.866Z (+2ms)
+- #191 response:assistant @ 2026-03-04T06:24:42.356Z (+490ms)
+- #192 response:assistant @ 2026-03-04T06:24:42.357Z (+1ms)
+- #193 response:assistant @ 2026-03-04T06:24:42.358Z (+1ms)
+- #194 response:assistant @ 2026-03-04T06:24:42.364Z (+6ms)
+- #195 response:assistant @ 2026-03-04T06:24:42.365Z (+1ms)
+- #196 response:assistant @ 2026-03-04T06:24:42.366Z (+1ms)
+- #197 response:assistant @ 2026-03-04T06:24:42.368Z (+2ms)
+- #198 response:assistant @ 2026-03-04T06:24:42.370Z (+2ms)
+- #199 response:assistant @ 2026-03-04T06:24:42.728Z (+358ms)
+- #200 response:assistant @ 2026-03-04T06:24:42.730Z (+2ms)
+- #201 response:assistant @ 2026-03-04T06:24:42.731Z (+1ms)
+- #202 response:assistant @ 2026-03-04T06:24:42.732Z (+1ms)
+- #203 response:assistant @ 2026-03-04T06:24:42.735Z (+3ms)
+- #204 response:assistant @ 2026-03-04T06:24:42.735Z (+0ms)
+- #205 response:assistant @ 2026-03-04T06:24:42.736Z (+1ms)
+- #206 response:assistant @ 2026-03-04T06:24:42.737Z (+1ms)
+- #207 response:assistant @ 2026-03-04T06:24:43.248Z (+511ms)
+- #208 response:assistant @ 2026-03-04T06:24:43.254Z (+6ms)
+- #209 response:assistant @ 2026-03-04T06:24:43.256Z (+2ms)
+- #210 response:assistant @ 2026-03-04T06:24:43.257Z (+1ms)
+- #211 response:assistant @ 2026-03-04T06:24:43.258Z (+1ms)
+- #212 response:assistant @ 2026-03-04T06:24:43.259Z (+1ms)
+- #213 response:assistant @ 2026-03-04T06:24:43.262Z (+3ms)
+- #214 session:after      @ 2026-03-04T06:24:43.340Z (+78ms)
+- #215 response:llm_output @ 2026-03-04T06:24:43.348Z (+8ms)

@@ -7,9 +7,26 @@ import type { BlockReplyPayload } from "./pi-embedded-payloads.js";
 
 export type ToolResultFormat = "markdown" | "plain";
 
+export type SubscribeEmbeddedPiSessionProfileAttrs = Record<string, string | number | boolean>;
+
+export type SubscribeEmbeddedPiSessionProfileSpanHandle = {
+  end: (status?: "ok" | "error", attrs?: SubscribeEmbeddedPiSessionProfileAttrs) => void;
+  setAttr: (key: string, value: string | number | boolean | undefined) => void;
+  setDetail: (key: string, value: unknown) => void;
+};
+
+export type SubscribeEmbeddedPiSessionProfileSink = {
+  event: (name: string, attrs?: SubscribeEmbeddedPiSessionProfileAttrs) => void;
+  startSpan: (
+    name: string,
+    attrs?: SubscribeEmbeddedPiSessionProfileAttrs,
+  ) => SubscribeEmbeddedPiSessionProfileSpanHandle;
+};
+
 export type SubscribeEmbeddedPiSessionParams = {
   session: AgentSession;
   runId: string;
+  profile?: SubscribeEmbeddedPiSessionProfileSink;
   hookRunner?: HookRunner;
   verboseLevel?: VerboseLevel;
   reasoningMode?: ReasoningLevel;

@@ -1,11 +1,13 @@
 import fs from "node:fs/promises";
 import os from "node:os";
+import path from "node:path";
 import type { AgentMessage, StreamFn } from "@mariozechner/pi-agent-core";
 import { streamSimple } from "@mariozechner/pi-ai";
 import {
   createAgentSession,
   DefaultResourceLoader,
   SessionManager,
+  type ToolDefinition,
 } from "@mariozechner/pi-coding-agent";
 import { resolveHeartbeatPrompt } from "../../../auto-reply/heartbeat.js";
 import { resolveChannelCapabilities } from "../../../config/channel-capabilities.js";
@@ -130,7 +132,14 @@ import {
 } from "./compaction-timeout.js";
 import { pruneProcessedHistoryImages } from "./history-image-prune.js";
 import { detectAndLoadPromptImages } from "./images.js";
-import type { EmbeddedRunAttemptParams, EmbeddedRunAttemptResult } from "./types.js";
+import type {
+  EmbeddedRunAttemptParams,
+  EmbeddedRunAttemptProfile,
+  EmbeddedRunAttemptProfileAttr,
+  EmbeddedRunAttemptProfileDetails,
+  EmbeddedRunAttemptProfileSpan,
+  EmbeddedRunAttemptResult,
+} from "./types.js";
 
 type PromptBuildHookRunner = {
   hasHooks: (hookName: "before_prompt_build" | "before_agent_start") => boolean;
@@ -143,6 +152,198 @@ type PromptBuildHookRunner = {
     ctx: PluginHookAgentContext,
   ) => Promise<PluginHookBeforeAgentStartResult | undefined>;
 };
+
+type AttemptProfileAttrs = Record<string, EmbeddedRunAttemptProfileAttr>;
+
+type AttemptProfileSpanHandle = {
+  end: (status?: "ok" | "error", attrs?: AttemptProfileAttrs) => void;
+  setAttr: (key: string, value: EmbeddedRunAttemptProfileAttr | undefined) => void;
+  setDetail: (key: string, value: unknown) => void;
+};
+
+export class EmbeddedAttemptProfiler {
+  private readonly startedAt = Date.now();
+  private readonly startedNs = process.hrtime.bigint();
+  private readonly spans: EmbeddedRunAttemptProfileSpan[] = [];
+
+  constructor(
+    private readonly meta: {
+      runId: string;
+      sessionId: string;
+      provider: string;
+      modelId: string;
+    },
+  ) {}
+
+  startSpan(name: string, attrs?: AttemptProfileAttrs): AttemptProfileSpanHandle {
+    const startedAt = Date.now();
+    const startedNs = process.hrtime.bigint();
+    const spanAttrs: AttemptProfileAttrs = sanitizeProfileAttrs(attrs) ?? {};
+    const spanDetails: EmbeddedRunAttemptProfileDetails = {};
+    let finished = false;
+    return {
+      end: (status = "ok", endAttrs) => {
+        if (finished) {
+          return;
+        }
+        finished = true;
+        const endedAt = Date.now();
+        this.spans.push({
+          name,
+          startedAt,
+          endedAt,
+          durationMs: durationMsFromNs(process.hrtime.bigint() - startedNs),
+          status,
+          attrs: sanitizeProfileAttrs({ ...spanAttrs, ...endAttrs }),
+          details: Object.keys(spanDetails).length > 0 ? { ...spanDetails } : undefined,
+        });
+      },
+      setAttr: (key, value) => {
+        if (finished || value === undefined) {
+          return;
+        }
+        spanAttrs[key] = value;
+      },
+      setDetail: (key, value) => {
+        if (finished || value === undefined) {
+          return;
+        }
+        spanDetails[key] = value;
+      },
+    };
+  }
+
+  async span<T>(
+    name: string,
+    attrs: AttemptProfileAttrs | undefined,
+    fn: () => Promise<T>,
+  ): Promise<T> {
+    const span = this.startSpan(name, attrs);
+    try {
+      const result = await fn();
+      span.end("ok");
+      return result;
+    } catch (error) {
+      span.end("error", { errorName: getProfileErrorName(error) });
+      throw error;
+    }
+  }
+
+  event(name: string, attrs?: AttemptProfileAttrs): void {
+    void name;
+    void attrs;
+  }
+
+  finish(attrs?: AttemptProfileAttrs): EmbeddedRunAttemptProfile {
+    return {
+      version: 1,
+      runId: this.meta.runId,
+      sessionId: this.meta.sessionId,
+      provider: this.meta.provider,
+      modelId: this.meta.modelId,
+      startedAt: this.startedAt,
+      endedAt: Date.now(),
+      durationMs: durationMsFromNs(process.hrtime.bigint() - this.startedNs),
+      attrs: sanitizeProfileAttrs(attrs),
+      spans: this.spans.slice(),
+    };
+  }
+}
+
+function durationMsFromNs(durationNs: bigint): number {
+  return Number(durationNs) / 1_000_000;
+}
+
+function sanitizeProfileAttrs(
+  attrs?: Record<string, EmbeddedRunAttemptProfileAttr | undefined>,
+): AttemptProfileAttrs | undefined {
+  if (!attrs) {
+    return undefined;
+  }
+  const entries = Object.entries(attrs).filter(([, value]) => value !== undefined);
+  if (entries.length === 0) {
+    return undefined;
+  }
+  return Object.fromEntries(entries) as AttemptProfileAttrs;
+}
+
+function getProfileErrorName(error: unknown): string {
+  if (error instanceof Error && error.name) {
+    return error.name;
+  }
+  return "Error";
+}
+
+export function formatAttemptProfileTimestampForFilename(timestampMs: number): string {
+  const date = new Date(timestampMs);
+  const pad = (value: number, width = 2) => String(value).padStart(width, "0");
+  return [
+    date.getUTCFullYear(),
+    pad(date.getUTCMonth() + 1),
+    pad(date.getUTCDate()),
+    "-",
+    pad(date.getUTCHours()),
+    pad(date.getUTCMinutes()),
+    pad(date.getUTCSeconds()),
+    "-",
+    pad(date.getUTCMilliseconds(), 3),
+  ].join("");
+}
+
+function isEnabledByEnvFlag(value: string | undefined): boolean | undefined {
+  const normalized = value?.trim().toLowerCase();
+  if (!normalized) {
+    return undefined;
+  }
+  if (["1", "true", "yes", "on"].includes(normalized)) {
+    return true;
+  }
+  if (["0", "false", "no", "off"].includes(normalized)) {
+    return false;
+  }
+  return undefined;
+}
+
+function resolveAttemptProfileOutputDir(params: {
+  config?: OpenClawConfig;
+  workspaceDir: string;
+}): string | undefined {
+  const envEnabled = isEnabledByEnvFlag(process.env.OPENCLAW_ATTEMPT_PROFILE);
+  const outputDir = process.env.OPENCLAW_ATTEMPT_PROFILE_DIR?.trim();
+  if (outputDir) {
+    return outputDir;
+  }
+  if (envEnabled === false) {
+    return undefined;
+  }
+  if (envEnabled === true) {
+    return path.join(params.workspaceDir, "debug", "profile");
+  }
+  const diagnosticsConfig = params.config?.diagnostics?.attemptProfile;
+  if (diagnosticsConfig?.enabled !== true) {
+    return undefined;
+  }
+  return diagnosticsConfig.dirPath?.trim() || path.join(params.workspaceDir, "debug", "profile");
+}
+
+async function maybePersistAttemptProfile(
+  profile: EmbeddedRunAttemptProfile,
+  params: {
+    config?: OpenClawConfig;
+    workspaceDir: string;
+  },
+): Promise<string | undefined> {
+  const outputDir = resolveAttemptProfileOutputDir(params);
+  if (!outputDir) {
+    return undefined;
+  }
+  const safeRunId = profile.runId.replace(/[^a-zA-Z0-9._-]+/g, "-");
+  const timestampPrefix = formatAttemptProfileTimestampForFilename(Date.now());
+  const filePath = path.join(outputDir, `${timestampPrefix}-${safeRunId}.json`);
+  await fs.mkdir(outputDir, { recursive: true });
+  await fs.writeFile(filePath, `${JSON.stringify(profile, null, 2)}\n`, "utf8");
+  return filePath;
+}
 
 export function isOllamaCompatProvider(model: {
   provider?: string;
@@ -431,6 +632,178 @@ export function wrapStreamFnTrimToolCallNames(
     }
     return wrapStreamTrimToolCallNames(maybeStream, allowedToolNames);
   };
+}
+
+function wrapProfiledStream(
+  stream: ReturnType<typeof streamSimple>,
+  profiler: EmbeddedAttemptProfiler,
+  span: AttemptProfileSpanHandle,
+  meta: AttemptProfileAttrs,
+  callStartedNs: bigint,
+): ReturnType<typeof streamSimple> {
+  const originalResult = stream.result.bind(stream);
+  const originalAsyncIterator = stream[Symbol.asyncIterator].bind(stream);
+  let finished = false;
+  let firstChunkRecorded = false;
+
+  const markFirstChunk = () => {
+    if (firstChunkRecorded) {
+      return;
+    }
+    firstChunkRecorded = true;
+    span.setAttr("firstChunkSeen", true);
+    span.setAttr("firstChunkLatencyMs", durationMsFromNs(process.hrtime.bigint() - callStartedNs));
+  };
+
+  const finish = (status: "ok" | "error", attrs?: AttemptProfileAttrs) => {
+    if (finished) {
+      return;
+    }
+    finished = true;
+    profiler.event(`pi.model_call.${status === "ok" ? "end" : "error"}`, {
+      ...meta,
+      ...attrs,
+    });
+    span.end(status, attrs);
+  };
+
+  stream.result = async () => {
+    try {
+      const message = await originalResult();
+      finish("ok");
+      return message;
+    } catch (error) {
+      finish("error", { errorName: getProfileErrorName(error) });
+      throw error;
+    }
+  };
+
+  (stream as { [Symbol.asyncIterator]: typeof originalAsyncIterator })[Symbol.asyncIterator] =
+    function () {
+      const iterator = originalAsyncIterator();
+      return {
+        async next() {
+          try {
+            const result = await iterator.next();
+            if (!result.done) {
+              markFirstChunk();
+            }
+            return result;
+          } catch (error) {
+            finish("error", { errorName: getProfileErrorName(error) });
+            throw error;
+          }
+        },
+        async return(value?: unknown) {
+          const result = (await iterator.return?.(value)) ?? {
+            done: true as const,
+            value: undefined,
+          };
+          finish("ok", { returnedEarly: true });
+          return result;
+        },
+        async throw(error?: unknown) {
+          try {
+            const result = (await iterator.throw?.(error)) ?? {
+              done: true as const,
+              value: undefined,
+            };
+            finish("error", {
+              errorName: getProfileErrorName(error),
+              thrownIntoIterator: true,
+            });
+            return result;
+          } catch (iteratorError) {
+            finish("error", {
+              errorName: getProfileErrorName(iteratorError),
+              thrownIntoIterator: true,
+            });
+            throw iteratorError;
+          }
+        },
+      };
+    };
+
+  return stream;
+}
+
+export function wrapStreamFnProfile(
+  baseFn: StreamFn,
+  params: {
+    profiler: EmbeddedAttemptProfiler;
+    provider: string;
+    modelId: string;
+    modelApi?: string;
+  },
+): StreamFn {
+  let callIndex = 0;
+  return (model, context, options) => {
+    const ctx = context as unknown as { messages?: unknown };
+    const inputMessages = Array.isArray(ctx?.messages) ? ctx.messages.length : undefined;
+    const attrs =
+      sanitizeProfileAttrs({
+        callIndex: ++callIndex,
+        provider: params.provider,
+        modelId: params.modelId,
+        modelApi: params.modelApi ?? "unknown",
+        inputMessages,
+      }) ?? {};
+    const callStartedNs = process.hrtime.bigint();
+    params.profiler.event("pi.model_call.start", attrs);
+    const span = params.profiler.startSpan("pi.model_call", attrs);
+    if (Array.isArray(ctx?.messages)) {
+      span.setDetail("inputMessages", ctx.messages);
+    }
+    const maybeStream = baseFn(model, context, options);
+    if (maybeStream && typeof maybeStream === "object" && "then" in maybeStream) {
+      return Promise.resolve(maybeStream).then(
+        (stream) => wrapProfiledStream(stream, params.profiler, span, attrs, callStartedNs),
+        (error) => {
+          params.profiler.event("pi.model_call.error", {
+            ...attrs,
+            errorName: getProfileErrorName(error),
+          });
+          span.end("error", { errorName: getProfileErrorName(error) });
+          throw error;
+        },
+      );
+    }
+    return wrapProfiledStream(maybeStream, params.profiler, span, attrs, callStartedNs);
+  };
+}
+
+function wrapToolDefinitionsWithProfile(
+  tools: ToolDefinition[],
+  profiler: EmbeddedAttemptProfiler,
+): ToolDefinition[] {
+  return tools.map((tool) => {
+    const execute = tool.execute.bind(tool);
+    return {
+      ...tool,
+      execute: async (...args) => {
+        const toolCallId = typeof args[0] === "string" ? args[0] : "unknown";
+        const attrs = {
+          toolName: tool.name,
+          toolCallId,
+        };
+        profiler.event("pi.tool_execute.start", attrs);
+        const span = profiler.startSpan("pi.tool_execute", attrs);
+        try {
+          const result = await execute(...args);
+          profiler.event("pi.tool_execute.end", attrs);
+          span.end("ok");
+          return result;
+        } catch (error) {
+          profiler.event("pi.tool_execute.error", {
+            ...attrs,
+            errorName: getProfileErrorName(error),
+          });
+          span.end("error", { errorName: getProfileErrorName(error) });
+          throw error;
+        }
+      },
+    };
+  });
 }
 
 // ---------------------------------------------------------------------------
@@ -749,35 +1122,71 @@ export async function runEmbeddedAttempt(
   const resolvedWorkspace = resolveUserPath(params.workspaceDir);
   const prevCwd = process.cwd();
   const runAbortController = new AbortController();
+  const profiler = new EmbeddedAttemptProfiler({
+    runId: params.runId,
+    sessionId: params.sessionId,
+    provider: params.provider,
+    modelId: params.modelId,
+  });
+  profiler.event("openclaw.attempt.start", {
+    provider: params.provider,
+    modelId: params.modelId,
+  });
   ensureGlobalUndiciStreamTimeouts();
 
   log.debug(
     `embedded run start: runId=${params.runId} sessionId=${params.sessionId} provider=${params.provider} model=${params.modelId} thinking=${params.thinkLevel} messageChannel=${params.messageChannel ?? params.messageProvider ?? "unknown"}`,
   );
 
-  await fs.mkdir(resolvedWorkspace, { recursive: true });
+  await profiler.span(
+    "openclaw.workspace.prepare",
+    { workspaceDir: resolvedWorkspace },
+    async () => {
+      await fs.mkdir(resolvedWorkspace, { recursive: true });
+    },
+  );
 
   const sandboxSessionKey = params.sessionKey?.trim() || params.sessionId;
-  const sandbox = await resolveSandboxContext({
-    config: params.config,
-    sessionKey: sandboxSessionKey,
-    workspaceDir: resolvedWorkspace,
-  });
+  const sandbox = await profiler.span(
+    "openclaw.sandbox.resolve",
+    { sessionKey: sandboxSessionKey },
+    async () =>
+      resolveSandboxContext({
+        config: params.config,
+        sessionKey: sandboxSessionKey,
+        workspaceDir: resolvedWorkspace,
+      }),
+  );
   const effectiveWorkspace = sandbox?.enabled
     ? sandbox.workspaceAccess === "rw"
       ? resolvedWorkspace
       : sandbox.workspaceDir
     : resolvedWorkspace;
-  await fs.mkdir(effectiveWorkspace, { recursive: true });
+  await profiler.span(
+    "openclaw.workspace.effective",
+    {
+      sandboxEnabled: sandbox?.enabled === true,
+      workspaceAccess: sandbox?.workspaceAccess ?? "host",
+      effectiveWorkspace,
+    },
+    async () => {
+      await fs.mkdir(effectiveWorkspace, { recursive: true });
+    },
+  );
 
   let restoreSkillEnv: (() => void) | undefined;
   process.chdir(effectiveWorkspace);
   try {
-    const { shouldLoadSkillEntries, skillEntries } = resolveEmbeddedRunSkillEntries({
-      workspaceDir: effectiveWorkspace,
-      config: params.config,
-      skillsSnapshot: params.skillsSnapshot,
-    });
+    const { shouldLoadSkillEntries, skillEntries } = await profiler.span(
+      "openclaw.skills.resolve_entries",
+      { workspaceDir: effectiveWorkspace, hasSnapshot: params.skillsSnapshot !== undefined },
+      async () =>
+        resolveEmbeddedRunSkillEntries({
+          workspaceDir: effectiveWorkspace,
+          config: params.config,
+          skillsSnapshot: params.skillsSnapshot,
+        }),
+    );
     restoreSkillEnv = params.skillsSnapshot
       ? applySkillEnvOverridesFromSnapshot({
           snapshot: params.skillsSnapshot,
@@ -788,24 +1197,41 @@ export async function runEmbeddedAttempt(
           config: params.config,
         });
 
-    const skillsPrompt = resolveSkillsPromptForRun({
-      skillsSnapshot: params.skillsSnapshot,
-      entries: shouldLoadSkillEntries ? skillEntries : undefined,
-      config: params.config,
-      workspaceDir: effectiveWorkspace,
-    });
+    const skillsPrompt = await profiler.span(
+      "openclaw.skills.prompt",
+      {
+        workspaceDir: effectiveWorkspace,
+        loadedEntries: skillEntries?.length ?? 0,
+        shouldLoadSkillEntries,
+      },
+      async () =>
+        resolveSkillsPromptForRun({
+          skillsSnapshot: params.skillsSnapshot,
+          entries: shouldLoadSkillEntries ? skillEntries : undefined,
+          config: params.config,
+          workspaceDir: effectiveWorkspace,
+        }),
+    );
 
     const sessionLabel = params.sessionKey ?? params.sessionId;
-    const { bootstrapFiles: hookAdjustedBootstrapFiles, contextFiles } =
-      await resolveBootstrapContextForRun({
+    const { bootstrapFiles: hookAdjustedBootstrapFiles, contextFiles } = await profiler.span(
+      "openclaw.bootstrap.resolve",
+      {
         workspaceDir: effectiveWorkspace,
-        config: params.config,
-        sessionKey: params.sessionKey,
-        sessionId: params.sessionId,
-        warn: makeBootstrapWarn({ sessionLabel, warn: (message) => log.warn(message) }),
-        contextMode: params.bootstrapContextMode,
-        runKind: params.bootstrapContextRunKind,
-      });
+        contextMode: params.bootstrapContextMode ?? "full",
+        runKind: params.bootstrapContextRunKind ?? "default",
+      },
+      async () =>
+        resolveBootstrapContextForRun({
+          workspaceDir: effectiveWorkspace,
+          config: params.config,
+          sessionKey: params.sessionKey,
+          sessionId: params.sessionId,
+          warn: makeBootstrapWarn({ sessionLabel, warn: (message) => log.warn(message) }),
+          contextMode: params.bootstrapContextMode,
+          runKind: params.bootstrapContextRunKind,
+        }),
+    );
     const bootstrapMaxChars = resolveBootstrapMaxChars(params.config);
     const bootstrapTotalMaxChars = resolveBootstrapTotalMaxChars(params.config);
     const bootstrapAnalysis = analyzeBootstrapBudget({
@@ -842,49 +1268,54 @@ export async function runEmbeddedAttempt(
     });
     // Check if the model supports native image input
     const modelHasVision = params.model.input?.includes("image") ?? false;
-    const toolsRaw = params.disableTools
-      ? []
-      : createOpenClawCodingTools({
-          agentId: sessionAgentId,
-          exec: {
-            ...params.execOverrides,
-            elevated: params.bashElevated,
-          },
-          sandbox,
-          messageProvider: params.messageChannel ?? params.messageProvider,
-          agentAccountId: params.agentAccountId,
-          messageTo: params.messageTo,
-          messageThreadId: params.messageThreadId,
-          groupId: params.groupId,
-          groupChannel: params.groupChannel,
-          groupSpace: params.groupSpace,
-          spawnedBy: params.spawnedBy,
-          senderId: params.senderId,
-          senderName: params.senderName,
-          senderUsername: params.senderUsername,
-          senderE164: params.senderE164,
-          senderIsOwner: params.senderIsOwner,
-          sessionKey: sandboxSessionKey,
-          sessionId: params.sessionId,
-          runId: params.runId,
-          agentDir,
-          workspaceDir: effectiveWorkspace,
-          config: params.config,
-          abortSignal: runAbortController.signal,
-          modelProvider: params.model.provider,
-          modelId: params.modelId,
-          modelContextWindowTokens: params.model.contextWindow,
-          modelAuthMode: resolveModelAuthMode(params.model.provider, params.config),
-          currentChannelId: params.currentChannelId,
-          currentThreadTs: params.currentThreadTs,
-          currentMessageId: params.currentMessageId,
-          replyToMode: params.replyToMode,
-          hasRepliedRef: params.hasRepliedRef,
-          modelHasVision,
-          requireExplicitMessageTarget:
-            params.requireExplicitMessageTarget ?? isSubagentSessionKey(params.sessionKey),
-          disableMessageTool: params.disableMessageTool,
-        });
+    const toolsRaw = await profiler.span(
+      "openclaw.tools.build",
+      { disableTools: params.disableTools === true, modelHasVision },
+      async () =>
+        params.disableTools
+          ? []
+          : createOpenClawCodingTools({
+              agentId: sessionAgentId,
+              exec: {
+                ...params.execOverrides,
+                elevated: params.bashElevated,
+              },
+              sandbox,
+              messageProvider: params.messageChannel ?? params.messageProvider,
+              agentAccountId: params.agentAccountId,
+              messageTo: params.messageTo,
+              messageThreadId: params.messageThreadId,
+              groupId: params.groupId,
+              groupChannel: params.groupChannel,
+              groupSpace: params.groupSpace,
+              spawnedBy: params.spawnedBy,
+              senderId: params.senderId,
+              senderName: params.senderName,
+              senderUsername: params.senderUsername,
+              senderE164: params.senderE164,
+              senderIsOwner: params.senderIsOwner,
+              sessionKey: sandboxSessionKey,
+              sessionId: params.sessionId,
+              runId: params.runId,
+              agentDir,
+              workspaceDir: effectiveWorkspace,
+              config: params.config,
+              abortSignal: runAbortController.signal,
+              modelProvider: params.model.provider,
+              modelId: params.modelId,
+              modelContextWindowTokens: params.model.contextWindow,
+              modelAuthMode: resolveModelAuthMode(params.model.provider, params.config),
+              currentChannelId: params.currentChannelId,
+              currentThreadTs: params.currentThreadTs,
+              currentMessageId: params.currentMessageId,
+              replyToMode: params.replyToMode,
+              hasRepliedRef: params.hasRepliedRef,
+              modelHasVision,
+              requireExplicitMessageTarget:
+                params.requireExplicitMessageTarget ?? isSubagentSessionKey(params.sessionKey),
+              disableMessageTool: params.disableMessageTool,
+            }),
+    );
     const toolsEnabled = supportsModelTools(params.model);
     const tools = sanitizeToolsForGoogle({
       tools: toolsEnabled ? toolsRaw : [],
@@ -897,7 +1328,9 @@ export async function runEmbeddedAttempt(
     });
     logToolSchemasForGoogle({ tools, provider: params.provider });
 
-    const machineName = await getMachineDisplayName();
+    const machineName = await profiler.span("openclaw.runtime.machine_name", undefined, async () =>
+      getMachineDisplayName(),
+    );
     const runtimeChannel = normalizeMessageChannel(params.messageChannel ?? params.messageProvider);
     let runtimeCapabilities = runtimeChannel
       ? (resolveChannelCapabilities({
@@ -986,46 +1419,57 @@ export async function runEmbeddedAttempt(
     });
     const isDefaultAgent = sessionAgentId === defaultAgentId;
     const promptMode = resolvePromptModeForSession(params.sessionKey);
-    const docsPath = await resolveOpenClawDocsPath({
-      workspaceDir: effectiveWorkspace,
-      argv1: process.argv[1],
-      cwd: process.cwd(),
-      moduleUrl: import.meta.url,
-    });
+    const docsPath = await profiler.span("openclaw.docs.resolve_path", undefined, async () =>
+      resolveOpenClawDocsPath({
+        workspaceDir: effectiveWorkspace,
+        argv1: process.argv[1],
+        cwd: process.cwd(),
+        moduleUrl: import.meta.url,
+      }),
+    );
     const ttsHint = params.config ? buildTtsSystemPromptHint(params.config) : undefined;
     const ownerDisplay = resolveOwnerDisplaySetting(params.config);
 
-    const appendPrompt = buildEmbeddedSystemPrompt({
-      workspaceDir: effectiveWorkspace,
-      defaultThinkLevel: params.thinkLevel,
-      reasoningLevel: params.reasoningLevel ?? "off",
-      extraSystemPrompt: params.extraSystemPrompt,
-      ownerNumbers: params.ownerNumbers,
-      ownerDisplay: ownerDisplay.ownerDisplay,
-      ownerDisplaySecret: ownerDisplay.ownerDisplaySecret,
-      reasoningTagHint,
-      heartbeatPrompt: isDefaultAgent
-        ? resolveHeartbeatPrompt(params.config?.agents?.defaults?.heartbeat?.prompt)
-        : undefined,
-      skillsPrompt,
-      docsPath: docsPath ?? undefined,
-      ttsHint,
-      workspaceNotes,
-      reactionGuidance,
-      promptMode,
-      acpEnabled: params.config?.acp?.enabled !== false,
-      runtimeInfo,
-      messageToolHints,
-      sandboxInfo,
-      tools,
-      modelAliasLines: buildModelAliasLines(params.config),
-      userTimezone,
-      userTime,
-      userTimeFormat,
-      contextFiles,
-      bootstrapTruncationWarningLines: bootstrapPromptWarning.lines,
-      memoryCitationsMode: params.config?.memory?.citations,
-    });
+    const appendPrompt = await profiler.span(
+      "openclaw.system_prompt.build",
+      {
+        toolCount: tools.length,
+        contextFileCount: contextFiles.length,
+        bootstrapFileCount: hookAdjustedBootstrapFiles.length,
+      },
+      async () =>
+        buildEmbeddedSystemPrompt({
+          workspaceDir: effectiveWorkspace,
+          defaultThinkLevel: params.thinkLevel,
+          reasoningLevel: params.reasoningLevel ?? "off",
+          extraSystemPrompt: params.extraSystemPrompt,
+          ownerNumbers: params.ownerNumbers,
+          ownerDisplay: ownerDisplay.ownerDisplay,
+          ownerDisplaySecret: ownerDisplay.ownerDisplaySecret,
+          reasoningTagHint,
+          heartbeatPrompt: isDefaultAgent
+            ? resolveHeartbeatPrompt(params.config?.agents?.defaults?.heartbeat?.prompt)
+            : undefined,
+          skillsPrompt,
+          docsPath: docsPath ?? undefined,
+          ttsHint,
+          workspaceNotes,
+          reactionGuidance,
+          promptMode,
+          acpEnabled: params.config?.acp?.enabled !== false,
+          runtimeInfo,
+          messageToolHints,
+          sandboxInfo,
+          tools,
+          modelAliasLines: buildModelAliasLines(params.config),
+          userTimezone,
+          userTime,
+          userTimeFormat,
+          contextFiles,
+          bootstrapTruncationWarningLines: bootstrapPromptWarning.lines,
+          memoryCitationsMode: params.config?.memory?.citations,
+        }),
+    );
     const systemPromptReport = buildSystemPromptReport({
       source: "run",
       generatedAt: Date.now(),
@@ -1057,21 +1501,31 @@ export async function runEmbeddedAttempt(
     const systemPromptOverride = createSystemPromptOverride(appendPrompt);
     let systemPromptText = systemPromptOverride();
 
-    const sessionLock = await acquireSessionWriteLock({
-      sessionFile: params.sessionFile,
-      maxHoldMs: resolveSessionLockMaxHoldFromTimeout({
-        timeoutMs: params.timeoutMs,
-      }),
-    });
+    const sessionLock = await profiler.span(
+      "openclaw.session.acquire_lock",
+      { sessionFile: params.sessionFile },
+      async () =>
+        acquireSessionWriteLock({
+          sessionFile: params.sessionFile,
+          maxHoldMs: resolveSessionLockMaxHoldFromTimeout({
+            timeoutMs: params.timeoutMs,
+          }),
+        }),
+    );
 
     let sessionManager: ReturnType<typeof guardSessionManager> | undefined;
     let session: Awaited<ReturnType<typeof createAgentSession>>["session"] | undefined;
     let removeToolResultContextGuard: (() => void) | undefined;
     try {
-      await repairSessionFileIfNeeded({
-        sessionFile: params.sessionFile,
-        warn: (message) => log.warn(message),
-      });
+      await profiler.span(
+        "openclaw.session.repair",
+        { sessionFile: params.sessionFile },
+        async () =>
+          repairSessionFileIfNeeded({
+            sessionFile: params.sessionFile,
+            warn: (message) => log.warn(message),
+          }),
+      );
       const hadSessionFile = await fs
         .stat(params.sessionFile)
         .then(() => true)
@@ -1083,7 +1537,11 @@ export async function runEmbeddedAttempt(
         modelId: params.modelId,
       });
 
-      await prewarmSessionFile(params.sessionFile);
+      await profiler.span(
+        "openclaw.session.prewarm",
+        { sessionFile: params.sessionFile },
+        async () => prewarmSessionFile(params.sessionFile),
+      );
       sessionManager = guardSessionManager(SessionManager.open(params.sessionFile), {
         agentId: sessionAgentId,
         sessionKey: params.sessionKey,
@@ -1104,13 +1562,22 @@ export async function runEmbeddedAttempt(
         }
       }
 
-      await prepareSessionManagerForRun({
-        sessionManager,
-        sessionFile: params.sessionFile,
-        hadSessionFile,
-        sessionId: params.sessionId,
-        cwd: effectiveWorkspace,
-      });
+      await profiler.span(
+        "openclaw.session.prepare",
+        {
+          sessionFile: params.sessionFile,
+          hadSessionFile,
+          cwd: effectiveWorkspace,
+        },
+        async () =>
+          prepareSessionManagerForRun({
+            sessionManager,
+            sessionFile: params.sessionFile,
+            hadSessionFile,
+            sessionId: params.sessionId,
+            cwd: effectiveWorkspace,
+          }),
+      );
 
       const settingsManager = createPreparedEmbeddedPiSettingsManager({
         cwd: effectiveWorkspace,
@@ -1141,7 +1608,12 @@ export async function runEmbeddedAttempt(
           settingsManager,
           extensionFactories,
         });
-        await resourceLoader.reload();
+        const loader = resourceLoader;
+        await profiler.span(
+          "openclaw.resource_loader.reload",
+          { extensionFactoryCount: extensionFactories.length },
+          async () => loader.reload(),
+        );
       }
 
       // Get hook runner early so it's available when creating tools
@@ -1174,21 +1646,32 @@ export async function runEmbeddedAttempt(
           )
         : [];
 
-      const allCustomTools = [...customTools, ...clientToolDefs];
+      const profiledCustomTools = wrapToolDefinitionsWithProfile(customTools, profiler);
+      const profiledClientToolDefs = wrapToolDefinitionsWithProfile(clientToolDefs, profiler);
+      const allCustomTools = [...profiledCustomTools, ...profiledClientToolDefs];
 
-      ({ session } = await createAgentSession({
-        cwd: resolvedWorkspace,
-        agentDir,
-        authStorage: params.authStorage,
-        modelRegistry: params.modelRegistry,
-        model: params.model,
-        thinkingLevel: mapThinkingLevel(params.thinkLevel),
-        tools: builtInTools,
-        customTools: allCustomTools,
-        sessionManager,
-        settingsManager,
-        resourceLoader,
-      }));
+      ({ session } = await profiler.span(
+        "openclaw.session.create",
+        {
+          builtInToolCount: builtInTools.length,
+          customToolCount: allCustomTools.length,
+          extensionFactoryCount: extensionFactories.length,
+        },
+        async () =>
+          createAgentSession({
+            cwd: resolvedWorkspace,
+            agentDir,
+            authStorage: params.authStorage,
+            modelRegistry: params.modelRegistry,
+            model: params.model,
+            thinkingLevel: mapThinkingLevel(params.thinkLevel),
+            tools: builtInTools,
+            customTools: allCustomTools,
+            sessionManager,
+            settingsManager,
+            resourceLoader,
+          }),
+      ));
       applySystemPromptOverrideToSession(session, systemPromptText);
       if (!session) {
         throw new Error("Embedded agent session missing");
@@ -1293,6 +1776,16 @@ export async function runEmbeddedAttempt(
         activeSession.agent.streamFn = cacheTrace.wrapStreamFn(activeSession.agent.streamFn);
       }
 
+      // Install profiling before request-sanitizing wrappers so the profiler sees
+      // the final message payload passed to the provider after those wrappers
+      // have rewritten the context.
+      activeSession.agent.streamFn = wrapStreamFnProfile(activeSession.agent.streamFn, {
+        profiler,
+        provider: params.provider,
+        modelId: params.modelId,
+        modelApi: params.model.api,
+      });
+
       // Copilot/Claude can reject persisted `thinking` blocks (e.g. thinkingSignature:"reasoning_text")
       // on *any* follow-up provider call (including tool continuations). Wrap the stream function
       // so every outbound request sees sanitized messages.
@@ -1386,17 +1879,28 @@ export async function runEmbeddedAttempt(
       }
 
       try {
-        const prior = await sanitizeSessionHistory({
-          messages: activeSession.messages,
-          modelApi: params.model.api,
-          modelId: params.modelId,
-          provider: params.provider,
-          allowedToolNames,
-          config: params.config,
-          sessionManager,
-          sessionId: params.sessionId,
-          policy: transcriptPolicy,
-        });
+        const guardedSessionManager = sessionManager;
+        if (!guardedSessionManager) {
+          throw new Error("Session manager missing");
+        }
+        const prior = await profiler.span(
+          "openclaw.history.sanitize",
+          {
+            initialMessageCount: activeSession.messages.length,
+          },
+          async () =>
+            sanitizeSessionHistory({
+              messages: activeSession.messages,
+              modelApi: params.model.api,
+              modelId: params.modelId,
+              provider: params.provider,
+              allowedToolNames,
+              config: params.config,
+              sessionManager: guardedSessionManager,
+              sessionId: params.sessionId,
+              policy: transcriptPolicy,
+            }),
+        );
         cacheTrace?.recordStage("session:sanitized", { messages: prior });
         const validatedGemini = transcriptPolicy.validateGeminiTurns
           ? validateGeminiTurns(prior)
@@ -1421,11 +1925,19 @@ export async function runEmbeddedAttempt(
 
         if (params.contextEngine) {
           try {
-            const assembled = await params.contextEngine.assemble({
-              sessionId: params.sessionId,
-              messages: activeSession.messages,
-              tokenBudget: params.contextTokenBudget,
-            });
+            const assembled = await profiler.span(
+              "openclaw.context_engine.assemble",
+              {
+                messageCount: activeSession.messages.length,
+                tokenBudget: params.contextTokenBudget ?? -1,
+              },
+              async () =>
+                params.contextEngine!.assemble({
+                  sessionId: params.sessionId,
+                  messages: activeSession.messages,
+                  tokenBudget: params.contextTokenBudget,
+                }),
+            );
             if (assembled.messages !== activeSession.messages) {
               activeSession.agent.replaceMessages(assembled.messages);
             }
@@ -1510,6 +2022,7 @@ export async function runEmbeddedAttempt(
       const subscription = subscribeEmbeddedPiSession({
         session: activeSession,
         runId: params.runId,
+        profile: profiler,
         hookRunner: getGlobalHookRunner() ?? undefined,
         verboseLevel: params.verboseLevel,
         reasoningMode: params.reasoningLevel ?? "off",
@@ -1640,13 +2153,18 @@ export async function runEmbeddedAttempt(
           trigger: params.trigger,
           channelId: params.messageChannel ?? params.messageProvider ?? undefined,
         };
-        const hookResult = await resolvePromptBuildHookResult({
-          prompt: params.prompt,
-          messages: activeSession.messages,
-          hookCtx,
-          hookRunner,
-          legacyBeforeAgentStartResult: params.legacyBeforeAgentStartResult,
-        });
+        const hookResult = await profiler.span(
+          "openclaw.prompt.hooks",
+          { messageCount: activeSession.messages.length },
+          async () =>
+            resolvePromptBuildHookResult({
+              prompt: params.prompt,
+              messages: activeSession.messages,
+              hookCtx,
+              hookRunner,
+              legacyBeforeAgentStartResult: params.legacyBeforeAgentStartResult,
+            }),
+        );
         {
           if (hookResult?.prependContext) {
             effectivePrompt = `${hookResult.prependContext}\n\n${params.prompt}`;
@@ -1709,20 +2227,25 @@ export async function runEmbeddedAttempt(
 
           // Detect and load images referenced in the prompt for vision-capable models.
           // Images are prompt-local only (pi-like behavior).
-          const imageResult = await detectAndLoadPromptImages({
-            prompt: effectivePrompt,
-            workspaceDir: effectiveWorkspace,
-            model: params.model,
-            existingImages: params.images,
-            maxBytes: MAX_IMAGE_BYTES,
-            maxDimensionPx: resolveImageSanitizationLimits(params.config).maxDimensionPx,
-            workspaceOnly: effectiveFsWorkspaceOnly,
-            // Enforce sandbox path restrictions when sandbox is enabled
-            sandbox:
-              sandbox?.enabled && sandbox?.fsBridge
-                ? { root: sandbox.workspaceDir, bridge: sandbox.fsBridge }
-                : undefined,
-          });
+          const imageResult = await profiler.span(
+            "openclaw.prompt.images",
+            { promptLength: effectivePrompt.length, existingImages: params.images?.length ?? 0 },
+            async () =>
+              detectAndLoadPromptImages({
+                prompt: effectivePrompt,
+                workspaceDir: effectiveWorkspace,
+                model: params.model,
+                existingImages: params.images,
+                maxBytes: MAX_IMAGE_BYTES,
+                maxDimensionPx: resolveImageSanitizationLimits(params.config).maxDimensionPx,
+                workspaceOnly: effectiveFsWorkspaceOnly,
+                // Enforce sandbox path restrictions when sandbox is enabled
+                sandbox:
+                  sandbox?.enabled && sandbox?.fsBridge
+                    ? { root: sandbox.workspaceDir, bridge: sandbox.fsBridge }
+                    : undefined,
+              }),
+          );
 
           cacheTrace?.recordStage("prompt:images", {
             prompt: effectivePrompt,
@@ -1776,11 +2299,23 @@ export async function runEmbeddedAttempt(
 
           // Only pass images option if there are actually images to pass
           // This avoids potential issues with models that don't expect the images parameter
-          if (imageResult.images.length > 0) {
-            await abortable(activeSession.prompt(effectivePrompt, { images: imageResult.images }));
-          } else {
-            await abortable(activeSession.prompt(effectivePrompt));
-          }
+          await profiler.span(
+            "openclaw.prompt.execute",
+            {
+              promptLength: effectivePrompt.length,
+              promptImages: imageResult.images.length,
+              messageCount: activeSession.messages.length,
+            },
+            async () => {
+              if (imageResult.images.length > 0) {
+                await abortable(
+                  activeSession.prompt(effectivePrompt, { images: imageResult.images }),
+                );
+              } else {
+                await abortable(activeSession.prompt(effectivePrompt));
+              }
+            },
+          );
         } catch (err) {
           promptError = err;
           promptErrorSource = "prompt";
@@ -1809,7 +2344,11 @@ export async function runEmbeddedAttempt(
             await params.onBlockReplyFlush();
           }
 
-          await abortable(waitForCompactionRetry());
+          await profiler.span(
+            "openclaw.compaction.wait",
+            { isCompacting: subscription.isCompacting() },
+            async () => abortable(waitForCompactionRetry()),
+          );
         } catch (err) {
           if (isRunnerAbortError(err)) {
             if (!promptError) {
@@ -1892,14 +2431,22 @@ export async function runEmbeddedAttempt(
 
           if (typeof params.contextEngine.afterTurn === "function") {
             try {
-              await params.contextEngine.afterTurn({
-                sessionId: sessionIdUsed,
-                sessionFile: params.sessionFile,
-                messages: messagesSnapshot,
-                prePromptMessageCount,
-                tokenBudget: params.contextTokenBudget,
-                legacyCompactionParams: afterTurnLegacyCompactionParams,
-              });
+              await profiler.span(
+                "openclaw.context_engine.after_turn",
+                {
+                  messageCount: messagesSnapshot.length,
+                  prePromptMessageCount,
+                },
+                async () =>
+                  params.contextEngine!.afterTurn!({
+                    sessionId: sessionIdUsed,
+                    sessionFile: params.sessionFile,
+                    messages: messagesSnapshot,
+                    prePromptMessageCount,
+                    tokenBudget: params.contextTokenBudget,
+                    legacyCompactionParams: afterTurnLegacyCompactionParams,
+                  }),
+              );
             } catch (afterTurnErr) {
               log.warn(`context engine afterTurn failed: ${String(afterTurnErr)}`);
             }
@@ -1909,20 +2456,30 @@ export async function runEmbeddedAttempt(
             if (newMessages.length > 0) {
               if (typeof params.contextEngine.ingestBatch === "function") {
                 try {
-                  await params.contextEngine.ingestBatch({
-                    sessionId: sessionIdUsed,
-                    messages: newMessages,
-                  });
+                  await profiler.span(
+                    "openclaw.context_engine.ingest_batch",
+                    { messageCount: newMessages.length },
+                    async () =>
+                      params.contextEngine!.ingestBatch!({
+                        sessionId: sessionIdUsed,
+                        messages: newMessages,
+                      }),
+                  );
                 } catch (ingestErr) {
                   log.warn(`context engine ingest failed: ${String(ingestErr)}`);
                 }
               } else {
                 for (const msg of newMessages) {
                   try {
-                    await params.contextEngine.ingest({
-                      sessionId: sessionIdUsed,
-                      message: msg,
-                    });
+                    await profiler.span(
+                      "openclaw.context_engine.ingest",
+                      { role: msg.role },
+                      async () =>
+                        params.contextEngine!.ingest({
+                          sessionId: sessionIdUsed,
+                          message: msg,
+                        }),
+                    );
                   } catch (ingestErr) {
                     log.warn(`context engine ingest failed: ${String(ingestErr)}`);
                   }
@@ -2027,6 +2584,31 @@ export async function runEmbeddedAttempt(
           });
       }
 
+      profiler.event("openclaw.attempt.end", {
+        aborted,
+        timedOut,
+        timedOutDuringCompaction,
+        promptError: promptError !== null,
+      });
+      const profile = profiler.finish({
+        aborted,
+        timedOut,
+        timedOutDuringCompaction,
+        promptError: promptError !== null,
+        compactionCount: getCompactionCount(),
+      });
+      try {
+        const profilePath = await maybePersistAttemptProfile(profile, {
+          config: params.config,
+          workspaceDir: resolvedWorkspace,
+        });
+        if (profilePath) {
+          log.debug(`attempt profile written: ${profilePath}`);
+        }
+      } catch (error) {
+        log.warn(`failed to persist attempt profile: ${String(error)}`);
+      }
+
       return {
         aborted,
         timedOut,
@@ -2053,6 +2635,7 @@ export async function runEmbeddedAttempt(
         compactionCount: getCompactionCount(),
         // Client tool call detected (OpenResponses hosted tools)
         clientToolCall: clientToolCallDetected ?? undefined,
+        profile,
       };
     } finally {
       // Always tear down the session (and release the lock) before we leave this attempt.

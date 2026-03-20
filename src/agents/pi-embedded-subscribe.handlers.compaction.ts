@@ -4,10 +4,16 @@ import { getGlobalHookRunner } from "../plugins/hook-runner-global.js";
 import type { EmbeddedPiSubscribeContext } from "./pi-embedded-subscribe.handlers.types.js";
 import { makeZeroUsageSnapshot } from "./usage.js";
 
-export function handleAutoCompactionStart(ctx: EmbeddedPiSubscribeContext) {
+export function handleAutoCompactionStart(
+  ctx: EmbeddedPiSubscribeContext,
+  evt?: AgentEvent & { reason?: unknown },
+) {
   ctx.state.compactionInFlight = true;
   ctx.ensureCompactionPromise();
   ctx.log.debug(`embedded run compaction start: runId=${ctx.params.runId}`);
+  const reason = typeof evt?.reason === "string" ? evt.reason : undefined;
+  ctx.profileEvent("pi.compaction.start", reason ? { reason } : undefined);
+  ctx.profileStartCompaction(reason ? { reason } : undefined);
   emitAgentEvent({
     runId: ctx.params.runId,
     stream: "compaction",
@@ -61,6 +67,17 @@ export function handleAutoCompactionEnd(
     ctx.maybeResolveCompactionWait();
     clearStaleAssistantUsageOnSessionMessages(ctx);
   }
+  ctx.profileEvent("pi.compaction.end", {
+    willRetry,
+    hasResult,
+    aborted: wasAborted,
+  });
+  ctx.profileEndCompaction(wasAborted ? "error" : "ok", {
+    willRetry,
+    hasResult,
+    aborted: wasAborted,
+    compactionCount: ctx.getCompactionCount(),
+  });
   emitAgentEvent({
     runId: ctx.params.runId,
     stream: "compaction",

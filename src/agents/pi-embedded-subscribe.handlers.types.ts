@@ -7,6 +7,7 @@ import type { EmbeddedBlockChunker } from "./pi-embedded-block-chunker.js";
 import type { MessagingToolSend } from "./pi-embedded-messaging.js";
 import type {
   BlockReplyChunking,
+  SubscribeEmbeddedPiSessionProfileAttrs,
   SubscribeEmbeddedPiSessionParams,
 } from "./pi-embedded-subscribe.types.js";
 import type { NormalizedUsage } from "./usage.js";
@@ -123,6 +124,24 @@ export type EmbeddedPiSubscribeContext = {
   incrementCompactionCount: () => void;
   getUsageTotals: () => NormalizedUsage | undefined;
   getCompactionCount: () => number;
+  profileEvent: (name: string, attrs?: SubscribeEmbeddedPiSessionProfileAttrs) => void;
+  profileStartAssistantMessage: () => void;
+  profileEndAssistantMessage: (
+    attrs?: SubscribeEmbeddedPiSessionProfileAttrs,
+    details?: Record<string, unknown>,
+  ) => void;
+  profileStartCompaction: (attrs?: SubscribeEmbeddedPiSessionProfileAttrs) => void;
+  profileEndCompaction: (
+    status?: "ok" | "error",
+    attrs?: SubscribeEmbeddedPiSessionProfileAttrs,
+  ) => void;
+  profileStartTool: (toolCallId: string, attrs?: SubscribeEmbeddedPiSessionProfileAttrs) => void;
+  profileUpdateTool: (toolCallId: string, attrs?: SubscribeEmbeddedPiSessionProfileAttrs) => void;
+  profileEndTool: (
+    toolCallId: string,
+    status?: "ok" | "error",
+    attrs?: SubscribeEmbeddedPiSessionProfileAttrs,
+  ) => void;
 };
 
 /**
@@ -168,6 +187,14 @@ export type ToolHandlerContext = {
   emitToolSummary: (toolName?: string, meta?: string) => void;
   emitToolOutput: (toolName?: string, meta?: string, output?: string) => void;
   trimMessagingToolSent: () => void;
+  profileEvent: (name: string, attrs?: SubscribeEmbeddedPiSessionProfileAttrs) => void;
+  profileStartTool: (toolCallId: string, attrs?: SubscribeEmbeddedPiSessionProfileAttrs) => void;
+  profileUpdateTool: (toolCallId: string, attrs?: SubscribeEmbeddedPiSessionProfileAttrs) => void;
+  profileEndTool: (
+    toolCallId: string,
+    status?: "ok" | "error",
+    attrs?: SubscribeEmbeddedPiSessionProfileAttrs,
+  ) => void;
 };
 
 export type EmbeddedPiSubscribeEvent =

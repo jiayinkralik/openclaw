@@ -320,6 +320,7 @@ const TARGET_KEYS = [
   "diagnostics",
   "diagnostics.otel",
   "diagnostics.cacheTrace",
+  "diagnostics.attemptProfile",
   "logging",
   "logging.level",
   "logging.file",

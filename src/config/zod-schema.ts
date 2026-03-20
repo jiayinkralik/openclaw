@@ -236,6 +236,13 @@ export const OpenClawSchema = z
           })
           .strict()
           .optional(),
+        attemptProfile: z
+          .object({
+            enabled: z.boolean().optional(),
+            dirPath: z.string().optional(),
+          })
+          .strict()
+          .optional(),
       })
       .strict()
       .optional(),

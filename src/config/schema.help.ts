@@ -508,6 +508,10 @@ export const FIELD_HELP: Record<string, string> = {
     "Include full message payloads in trace output (default: true).",
   "diagnostics.cacheTrace.includePrompt": "Include prompt text in trace output (default: true).",
   "diagnostics.cacheTrace.includeSystem": "Include system prompt in trace output (default: true).",
+  "diagnostics.attemptProfile.enabled":
+    "Write one JSON attempt profile per embedded run, including phase timings and lifecycle events (default: false).",
+  "diagnostics.attemptProfile.dirPath":
+    "Directory for JSON attempt profiles (default: <workspace>/debug/profile). One file is written per run.",
   "tools.exec.applyPatch.enabled":
     "Experimental. Enables apply_patch for OpenAI models when allowed by tool policy.",
   "tools.exec.applyPatch.workspaceOnly":

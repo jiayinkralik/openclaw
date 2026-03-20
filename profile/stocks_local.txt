@@ -1,0 +1,276 @@
+File: /Users/jiayinkralik/.openclaw/logs/cache-trace.jsonl
+Parsed lines: 3411 (errors: 0)
+Matched runs: 1
+
+============================================================
+RUN SUMMARY
+- runId: c74bce64-f9fe-48a4-9935-93a36dd3dd35
+- sessionId: 23c23cc1-cc6b-4158-89dd-f69b6980e67e
+- model: ollama/minimax-m2.5:cloud
+- window: 2026-03-04T08:07:00.012Z -> 2026-03-04T08:08:57.683Z (1m 57.7s)
+- messages: 1 {"user":1}
+- context sizes: system=23,913 history=253 prompt=253 chars
+- tokens: prompt=n/a (cache hit n/a) output=4,422 cacheWrite=0 total=24,851
+- prompt preview: [Wed 2026-03-04 00:06 PST] Analyze google’s stock and suggest whether it’s a better idea to sell or hold the stock based on macroeconomic trends, company fundamentals, etc., and create presentation slides (pptx) for it …
+- last user preview: [Wed 2026-03-04 00:06 PST] Analyze google’s stock and suggest whether it’s a better idea to sell or hold the stock based on macroeconomic trends, company fundamentals, etc., and create presentation slides (pptx) for it …
+- final output preview: Done! I've created a 10-slide PowerPoint presentation saved to: **`~/Desktop/openclaw/Google_Stock_Analysis_March2026.pptx`** ## Summary of My Analysis ### Recommendation: **HOLD** **Key Findings:** | Factor | Details | |--------|---------| | **Price** | ~$31…
+
+PHASE BREAKDOWN
+- session.load: 0ms (#1 -> #2)
+- session.sanitize: 0ms (#2 -> #3)
+- session.limit: 1ms (#3 -> #4)
+- prompt.build: 1ms (#4 -> #6)
+
+WORKFLOW (agent loops: stream:context -> next stream:context)
+- time accounting: model=1m 46.5s (90.5%) tools=9.71s (8.3%) overhead=1.44s (1.2%)
+- #1 @ +2ms (6.62s): produce_user_reply assistant_text | prefill=4.13s stream=0ms chunks=1 | tools=ollama_web_search(820ms) -> ollama_web_search(821ms) overhead=850ms
+    - gap: MODEL_PREFILL stream:context -> response:assistant 4.13s (#6->#7)
+    - gap: MODEL_TO_TOOL_DISPATCH response:assistant -> tool:start 841ms (#7->#8)
+    - gap: TOOL_LATENCY tool:start -> tool:result 821ms (#10->#11)
+- #2 @ +6.62s (8.55s): decide_tool tool_call:ollama_web_search | decision=6.77s | tools=ollama_web_search(1.05s) -> ollama_web_search(721ms) overhead=5ms
+    - gap: MODEL_DECISION stream:context -> tool:start 6.77s (#12->#13)
+    - gap: TOOL_LATENCY tool:start -> tool:result 1.05s (#13->#14)
+    - gap: TOOL_LATENCY tool:start -> tool:result 721ms (#15->#16)
+- #3 @ +15.17s (8.59s): produce_user_reply assistant_text | prefill=7.58s stream=519ms chunks=2 maxGap=519ms | tools=exec(16ms) overhead=471ms
+    - gap: MODEL_PREFILL stream:context -> response:assistant 7.58s (#17->#18)
+    - gap: MODEL_STREAMING response:assistant -> response:assistant 519ms (#18->#19)
+- #4 @ +23.76s (2.80s): decide_tool tool_call:exec | decision=2.12s | tools=exec(684ms) overhead=1ms
+    - gap: MODEL_DECISION stream:context -> tool:start 2.12s (#23->#24)
+    - gap: TOOL_LATENCY tool:start -> tool:update 656ms (#24->#25)
+- #5 @ +26.57s (9.81s): decide_tool tool_call:exec | decision=6.79s | tools=exec(3.02s) overhead=4ms
+    - gap: MODEL_DECISION stream:context -> tool:start 6.79s (#28->#29)
+    - gap: TOOL_LATENCY tool:start -> tool:update 1.94s (#29->#30)
+- #6 @ +36.38s (55.26s): decide_tool tool_call:write | decision=55.26s | tools=write(4ms) overhead=2ms
+    - gap: MODEL_DECISION stream:context -> tool:start 55.26s (#49->#50)
+- #7 @ +1m 31.6s (6.85s): decide_tool tool_call:exec | decision=4.54s | tools=exec(2.31s) overhead=2ms
+    - gap: MODEL_DECISION stream:context -> tool:start 4.54s (#52->#53)
+    - gap: TOOL_LATENCY tool:start -> tool:update 2.30s (#53->#54)
+- #8 @ +1m 38.5s (4.26s): decide_tool tool_call:edit | decision=4.25s | tools=edit(8ms) overhead=1ms
+    - gap: MODEL_DECISION stream:context -> tool:start 4.25s (#57->#58)
+- #9 @ +1m 42.8s (2.76s): decide_tool tool_call:edit | decision=2.75s | tools=edit(6ms) overhead=1ms
+    - gap: MODEL_DECISION stream:context -> tool:start 2.75s (#60->#61)
+- #10 @ +1m 45.5s (3.07s): decide_tool tool_call:exec | decision=3.04s | tools=exec(22ms) overhead=2ms
+    - gap: MODEL_DECISION stream:context -> tool:start 3.04s (#63->#64)
+- #11 @ +1m 48.6s (2.29s): decide_tool tool_call:exec | decision=2.06s | tools=exec(231ms) overhead=2ms
+    - gap: MODEL_DECISION stream:context -> tool:start 2.06s (#66->#67)
+- #12 @ +1m 50.9s (6.80s): produce_user_reply assistant_text | prefill=2.24s stream=4.46s chunks=9 maxGap=694ms | tools=none overhead=94ms
+    - gap: MODEL_PREFILL stream:context -> response:assistant 2.24s (#70->#71)
+    - gap: MODEL_STREAMING response:assistant -> response:assistant 694ms (#73->#74)
+    - gap: MODEL_STREAMING response:assistant -> response:assistant 676ms (#71->#72)
+
+TOOLS (chronological)
+- +4.97s ollama_web_search call_function_juzkatg694yx_1|fc_361473_0: 820ms | status=ok | updates=0 | loop=1
+  meta: Google GOOGL stock analysis 2026 March forecast
+- +5.80s ollama_web_search call_function_juzkatg694yx_2|fc_717903_1: 821ms | status=ok | updates=0 | loop=1
+  meta: macroeconomic trends 2026 tech stocks Federal Reserve interest rates
+- +13.40s ollama_web_search call_function_0sq1skcgl6ry_2|fc_626804_0: 1.05s | status=ok | updates=0 | loop=2
+  meta: Google antitrust regulation 2026 DOJ lawsuit
+- +14.45s ollama_web_search call_function_0sq1skcgl6ry_1|fc_709666_1: 721ms | status=ok | updates=0 | loop=2
+  meta: Alphabet Google Q4 2025 earnings revenue cloud AI growth
+- +23.75s exec call_function_nfefxjsuvzu4_1|fc_562545_0: 16ms | status=error | updates=1 | loop=3
+  meta: pip install python-pptx
+- +25.88s exec call_function_p98zw8wyxirw_1|fc_145287_0: 684ms | status=ok | updates=2 | loop=4
+  meta: pip3 install python-pptx
+- +33.36s exec call_function_mtucuk2mawzf_1|fc_730127_0: 3.02s | status=ok | updates=18 | loop=5
+  meta: run python3 ~/.venv/pptx → run source → run pip install `python3 -m venv ~/.venv/pptx && source ~/.venv/pptx/bin/activate && pip install python-pptx`
+- +1m 31.6s write call_function_hdk7x8hcblp8_1|fc_853780_0: 4ms | status=ok | updates=0 | loop=6
+  meta: to ~/.openclaw/workspace/create_google_pptx.py (10370 chars)
+- +1m 36.2s exec call_function_kfj0ny1bqqky_1|fc_413952_0: 2.31s | status=ok | updates=2 | loop=7
+  meta: run source → run python3 ~/.openclaw/workspace/create_google_pptx.py `source ~/.venv/pptx/bin/activate && python3 ~/.openclaw/workspace/create_google_pptx.py`
+- +1m 42.7s edit call_function_g49g0ghg87t3_1|fc_491855_0: 8ms | status=ok | updates=0 | loop=8
+  meta: in ~/.openclaw/workspace/create_google_pptx.py (35 chars)
+- +1m 45.5s edit call_function_n2s41b62n08e_1|fc_319032_0: 6ms | status=error | updates=0 | loop=9
+  meta: in ~/.openclaw/workspace/create_google_pptx.py (8 chars)
+- +1m 48.6s exec call_function_2gocuclpcn6n_1|fc_194063_0: 22ms | status=ok | updates=0 | loop=10
+  meta: run sed on ~/.openclaw/workspace/create_google_pptx.py `sed -i '' 's/RgbColor/RGBColor/g' ~/.openclaw/workspace/create_google_pptx.py`
+- +1m 50.6s exec call_function_li502dsdfqdf_1|fc_193430_0: 231ms | status=ok | updates=1 | loop=11
+  meta: run source → run python3 ~/.openclaw/workspace/create_google_pptx.py `source ~/.venv/pptx/bin/activate && python3 ~/.openclaw/workspace/create_google_pptx.py`
+
+TOOLS (slowest 8)
+- exec call_function_mtucuk2mawzf_1|fc_730127_0: 3.02s | status=ok | loop=5
+- exec call_function_kfj0ny1bqqky_1|fc_413952_0: 2.31s | status=ok | loop=7
+- ollama_web_search call_function_0sq1skcgl6ry_2|fc_626804_0: 1.05s | status=ok | loop=2
+- ollama_web_search call_function_juzkatg694yx_2|fc_717903_1: 821ms | status=ok | loop=1
+- ollama_web_search call_function_juzkatg694yx_1|fc_361473_0: 820ms | status=ok | loop=1
+- ollama_web_search call_function_0sq1skcgl6ry_1|fc_709666_1: 721ms | status=ok | loop=2
+- exec call_function_p98zw8wyxirw_1|fc_145287_0: 684ms | status=ok | loop=4
+- exec call_function_li502dsdfqdf_1|fc_193430_0: 231ms | status=ok | loop=11
+
+LLM CALLS (from stream:context)
+- LLM#1: produce_user_reply assistant_text | ttft=4.13s stream=0ms chunks=1 | modelActive=4.13s | loopWall=6.62s | msgs=1 hist=253c
+- LLM#2: decide_tool tool_call:ollama_web_search | decision=6.77s | modelActive=6.77s | loopWall=8.55s | msgs=4 hist=7,097c
+- LLM#3: produce_user_reply assistant_text | ttft=7.58s stream=519ms chunks=2 maxGap=519ms | modelActive=8.10s | loopWall=8.59s | msgs=7 hist=12,509c
+- LLM#4: decide_tool tool_call:exec | decision=2.12s | modelActive=2.12s | loopWall=2.80s | msgs=9 hist=16,195c
+- LLM#5: decide_tool tool_call:exec | decision=6.79s | modelActive=6.79s | loopWall=9.81s | msgs=11 hist=18,131c
+- LLM#6: decide_tool tool_call:write | decision=55.26s | modelActive=55.26s | loopWall=55.26s | msgs=13 hist=19,881c
+- LLM#7: decide_tool tool_call:exec | decision=4.54s | modelActive=4.54s | loopWall=6.85s | msgs=15 hist=41,840c
+- LLM#8: decide_tool tool_call:edit | decision=4.25s | modelActive=4.25s | loopWall=4.26s | msgs=17 hist=42,814c
+- LLM#9: decide_tool tool_call:edit | decision=2.75s | modelActive=2.75s | loopWall=2.76s | msgs=19 hist=43,589c
+- LLM#10: decide_tool tool_call:exec | decision=3.04s | modelActive=3.04s | loopWall=3.07s | msgs=21 hist=44,422c
+- LLM#11: decide_tool tool_call:exec | decision=2.06s | modelActive=2.06s | loopWall=2.29s | msgs=23 hist=45,197c
+- LLM#12: produce_user_reply assistant_text | ttft=2.24s stream=4.46s chunks=9 maxGap=694ms | modelActive=6.70s | loopWall=6.80s | msgs=25 hist=45,806c
+
+CONTEXT EVOLUTION (at each stream:context)
+- LLM#1: msgs=1 histChars=253 roles=["user"]
+- LLM#2: msgs=4 (Δ+3) histChars=7,097 (Δ+6,844) roles=["user","assistant","toolResult","toolResult"]
+- LLM#3: msgs=7 (Δ+3) histChars=12,509 (Δ+5,412) roles=["user","assistant","toolResult","toolResult","assistant","toolResult","toolResult"]
+- LLM#4: msgs=9 (Δ+2) histChars=16,195 (Δ+3,686) roles=["user","assistant","toolResult","toolResult","assistant","toolResult","toolResult","assistant","toolResult"]
+- LLM#5: msgs=11 (Δ+2) histChars=18,131 (Δ+1,936) roles=["user","assistant","toolResult","toolResult","assistant","toolResult","toolResult","assistant","toolResult","assistant","toolResult"]
+- LLM#6: msgs=13 (Δ+2) histChars=19,881 (Δ+1,750) roles=["user","assistant","toolResult","toolResult","assistant","toolResult","toolResult","assistant","toolResult","assistant","toolResult","assistant","toolResult"]
+- LLM#7: msgs=15 (Δ+2) histChars=41,840 (Δ+21,959) roles=["user","assistant","toolResult","toolResult","assistant","toolResult","toolResult","assistant","toolResult","assistant","toolResult","assistant","toolResult","assistant","toolResult"]
+- LLM#8: msgs=17 (Δ+2) histChars=42,814 (Δ+974) roles=["user","assistant","toolResult","toolResult","assistant","toolResult","toolResult","assistant","toolResult","assistant","toolResult","assistant","toolResult","assistant","toolResult","assistant","toolResult"]
+- LLM#9: msgs=19 (Δ+2) histChars=43,589 (Δ+775) roles=["user","assistant","toolResult","toolResult","assistant","toolResult","toolResult","assistant","toolResult","assistant","toolResult","assistant","toolResult","assistant","toolResult","assistant","toolResult","assistant","toolResult"]
+- LLM#10: msgs=21 (Δ+2) histChars=44,422 (Δ+833) roles=["user","assistant","toolResult","toolResult","assistant","toolResult","toolResult","assistant","toolResult","assistant","toolResult","assistant","toolResult","assistant","toolResult","assistant","toolResult","assistant","toolResult","assistant","toolResult"]
+- LLM#11: msgs=23 (Δ+2) histChars=45,197 (Δ+775) roles=["user","assistant","toolResult","toolResult","assistant","toolResult","toolResult","assistant","toolResult","assistant","toolResult","assistant","toolResult","assistant","toolResult","assistant","toolResult","assistant","toolResult","assistant","toolResult","assistant","toolResult"]
+- LLM#12: msgs=25 (Δ+2) histChars=45,806 (Δ+609) roles=["user","assistant","toolResult","toolResult","assistant","toolResult","toolResult","assistant","toolResult","assistant","toolResult","assistant","toolResult","assistant","toolResult","assistant","toolResult","assistant","toolResult","assistant","toolResult","assistant","toolResult","assistant","toolResult"]
+
+TIME BREAKDOWN (transition-bucketed)
+- MODEL_DECISION: total=1m 27.6s (74.4%) count=9 max=55.26s at #49 stream:context -> #50 tool:start
+- MODEL_PREFILL: total=13.96s (11.9%) count=3 max=7.58s at #17 stream:context -> #18 response:assistant
+- TOOL_LATENCY: total=9.71s (8.3%) count=37 max=2.30s at #53 tool:start -> #54 tool:update
+- MODEL_STREAMING: total=4.98s (4.2%) count=9 max=694ms at #73 response:assistant -> #74 response:assistant
+- MODEL_TO_TOOL_DISPATCH: total=1.31s (1.1%) count=2 max=841ms at #7 response:assistant -> #8 tool:start
+- WRAP_UP: total=94ms (0.1%) count=2 max=90ms at #79 response:assistant -> #80 session:after
+- TOOL_HANDOFF: total=22ms (0.0%) count=11 max=4ms at #11 tool:result -> #12 stream:context
+- TOOL_CHAIN: total=8ms (0.0%) count=2 max=5ms at #9 tool:result -> #10 tool:start
+- PROMPT_BUILD: total=2ms (0.0%) count=3 max=1ms at #3 session:limited -> #4 prompt:before
+- SESSION: total=0ms (0.0%) count=2 
+
+TOP WAITS (single biggest gaps, top 8)
+- +36.38s MODEL_DECISION: stream:context -> tool:start 55.26s (#49->#50) tool=write
+- +15.17s MODEL_PREFILL: stream:context -> response:assistant 7.58s (#17->#18)
+- +26.57s MODEL_DECISION: stream:context -> tool:start 6.79s (#28->#29) tool=exec
+- +6.62s MODEL_DECISION: stream:context -> tool:start 6.77s (#12->#13) tool=ollama_web_search
+- +1m 31.6s MODEL_DECISION: stream:context -> tool:start 4.54s (#52->#53) tool=exec
+- +1m 38.5s MODEL_DECISION: stream:context -> tool:start 4.25s (#57->#58) tool=edit
+- +2ms MODEL_PREFILL: stream:context -> response:assistant 4.13s (#6->#7)
+- +1m 45.5s MODEL_DECISION: stream:context -> tool:start 3.04s (#63->#64) tool=exec
+
+COMPRESSED PATH (same-class spans merged)
+- PROMPT_BUILD: 2ms across 2 transition(s) (#3->#6)
+- MODEL_PREFILL: 4.13s across 1 transition(s) (#6->#7)
+- MODEL_TO_TOOL_DISPATCH: 841ms across 1 transition(s) (#7->#8)
+- TOOL_LATENCY: 820ms across 1 transition(s) (#8->#9)
+- TOOL_CHAIN: 5ms across 1 transition(s) (#9->#10)
+- TOOL_LATENCY: 821ms across 1 transition(s) (#10->#11)
+- TOOL_HANDOFF: 4ms across 1 transition(s) (#11->#12)
+- MODEL_DECISION: 6.77s across 1 transition(s) (#12->#13)
+- TOOL_LATENCY: 1.05s across 1 transition(s) (#13->#14)
+- TOOL_CHAIN: 3ms across 1 transition(s) (#14->#15)
+- TOOL_LATENCY: 721ms across 1 transition(s) (#15->#16)
+- TOOL_HANDOFF: 2ms across 1 transition(s) (#16->#17)
+- MODEL_PREFILL: 7.58s across 1 transition(s) (#17->#18)
+- MODEL_STREAMING: 519ms across 1 transition(s) (#18->#19)
+- MODEL_TO_TOOL_DISPATCH: 470ms across 1 transition(s) (#19->#20)
+- TOOL_LATENCY: 16ms across 2 transition(s) (#20->#22)
+- TOOL_HANDOFF: 1ms across 1 transition(s) (#22->#23)
+- MODEL_DECISION: 2.12s across 1 transition(s) (#23->#24)
+- TOOL_LATENCY: 684ms across 3 transition(s) (#24->#27)
+- TOOL_HANDOFF: 1ms across 1 transition(s) (#27->#28)
+- MODEL_DECISION: 6.79s across 1 transition(s) (#28->#29)
+- TOOL_LATENCY: 3.02s across 19 transition(s) (#29->#48)
+- TOOL_HANDOFF: 4ms across 1 transition(s) (#48->#49)
+- MODEL_DECISION: 55.26s across 1 transition(s) (#49->#50)
+- TOOL_LATENCY: 4ms across 1 transition(s) (#50->#51)
+- TOOL_HANDOFF: 2ms across 1 transition(s) (#51->#52)
+- MODEL_DECISION: 4.54s across 1 transition(s) (#52->#53)
+- TOOL_LATENCY: 2.31s across 2 transition(s) (#53->#56)
+- TOOL_HANDOFF: 2ms across 1 transition(s) (#56->#57)
+- MODEL_DECISION: 4.25s across 1 transition(s) (#57->#58)
+- TOOL_LATENCY: 8ms across 1 transition(s) (#58->#59)
+- TOOL_HANDOFF: 1ms across 1 transition(s) (#59->#60)
+- MODEL_DECISION: 2.75s across 1 transition(s) (#60->#61)
+- TOOL_LATENCY: 6ms across 1 transition(s) (#61->#62)
+- TOOL_HANDOFF: 1ms across 1 transition(s) (#62->#63)
+- MODEL_DECISION: 3.04s across 1 transition(s) (#63->#64)
+- TOOL_LATENCY: 22ms across 1 transition(s) (#64->#65)
+- TOOL_HANDOFF: 2ms across 1 transition(s) (#65->#66)
+- MODEL_DECISION: 2.06s across 1 transition(s) (#66->#67)
+- TOOL_LATENCY: 231ms across 2 transition(s) (#67->#69)
+- TOOL_HANDOFF: 2ms across 1 transition(s) (#69->#70)
+- MODEL_PREFILL: 2.24s across 1 transition(s) (#70->#71)
+- MODEL_STREAMING: 4.46s across 8 transition(s) (#71->#79)
+- WRAP_UP: 94ms across 2 transition(s) (#79->#81)
+
+RAW EVENTS
+- #  1 session:loaded     @ 2026-03-04T08:07:00.012Z (+n/a)
+- #  2 session:sanitized  @ 2026-03-04T08:07:00.012Z (+0ms)
+- #  3 session:limited    @ 2026-03-04T08:07:00.012Z (+0ms)
+- #  4 prompt:before      @ 2026-03-04T08:07:00.013Z (+1ms)
+- #  5 prompt:images      @ 2026-03-04T08:07:00.013Z (+0ms)
+- #  6 stream:context     @ 2026-03-04T08:07:00.014Z (+1ms)
+- #  7 response:assistant @ 2026-03-04T08:07:04.145Z (+4.13s)
+- #  8 tool:start         @ 2026-03-04T08:07:04.986Z (+841ms)
+- #  9 tool:result        @ 2026-03-04T08:07:05.806Z (+820ms)
+- # 10 tool:start         @ 2026-03-04T08:07:05.811Z (+5ms)
+- # 11 tool:result        @ 2026-03-04T08:07:06.632Z (+821ms)
+- # 12 stream:context     @ 2026-03-04T08:07:06.636Z (+4ms)
+- # 13 tool:start         @ 2026-03-04T08:07:13.409Z (+6.77s)
+- # 14 tool:result        @ 2026-03-04T08:07:14.460Z (+1.05s)
+- # 15 tool:start         @ 2026-03-04T08:07:14.463Z (+3ms)
+- # 16 tool:result        @ 2026-03-04T08:07:15.184Z (+721ms)
+- # 17 stream:context     @ 2026-03-04T08:07:15.186Z (+2ms)
+- # 18 response:assistant @ 2026-03-04T08:07:22.770Z (+7.58s)
+- # 19 response:assistant @ 2026-03-04T08:07:23.289Z (+519ms)
+- # 20 tool:start         @ 2026-03-04T08:07:23.759Z (+470ms)
+- # 21 tool:update        @ 2026-03-04T08:07:23.769Z (+10ms)
+- # 22 tool:result        @ 2026-03-04T08:07:23.775Z (+6ms)
+- # 23 stream:context     @ 2026-03-04T08:07:23.776Z (+1ms)
+- # 24 tool:start         @ 2026-03-04T08:07:25.894Z (+2.12s)
+- # 25 tool:update        @ 2026-03-04T08:07:26.550Z (+656ms)
+- # 26 tool:update        @ 2026-03-04T08:07:26.553Z (+3ms)
+- # 27 tool:result        @ 2026-03-04T08:07:26.578Z (+25ms)
+- # 28 stream:context     @ 2026-03-04T08:07:26.579Z (+1ms)
+- # 29 tool:start         @ 2026-03-04T08:07:33.368Z (+6.79s)
+- # 30 tool:update        @ 2026-03-04T08:07:35.312Z (+1.94s)
+- # 31 tool:update        @ 2026-03-04T08:07:35.314Z (+2ms)
+- # 32 tool:update        @ 2026-03-04T08:07:35.481Z (+167ms)
+- # 33 tool:update        @ 2026-03-04T08:07:35.482Z (+1ms)
+- # 34 tool:update        @ 2026-03-04T08:07:35.532Z (+50ms)
+- # 35 tool:update        @ 2026-03-04T08:07:35.534Z (+2ms)
+- # 36 tool:update        @ 2026-03-04T08:07:35.668Z (+134ms)
+- # 37 tool:update        @ 2026-03-04T08:07:35.671Z (+3ms)
+- # 38 tool:update        @ 2026-03-04T08:07:35.703Z (+32ms)
+- # 39 tool:update        @ 2026-03-04T08:07:35.705Z (+2ms)
+- # 40 tool:update        @ 2026-03-04T08:07:35.717Z (+12ms)
+- # 41 tool:update        @ 2026-03-04T08:07:35.724Z (+7ms)
+- # 42 tool:update        @ 2026-03-04T08:07:35.733Z (+9ms)
+- # 43 tool:update        @ 2026-03-04T08:07:35.741Z (+8ms)
+- # 44 tool:update        @ 2026-03-04T08:07:35.743Z (+2ms)
+- # 45 tool:update        @ 2026-03-04T08:07:35.761Z (+18ms)
+- # 46 tool:update        @ 2026-03-04T08:07:36.233Z (+472ms)
+- # 47 tool:update        @ 2026-03-04T08:07:36.333Z (+100ms)
+- # 48 tool:result        @ 2026-03-04T08:07:36.388Z (+55ms)
+- # 49 stream:context     @ 2026-03-04T08:07:36.392Z (+4ms)
+- # 50 tool:start         @ 2026-03-04T08:08:31.649Z (+55.26s)
+- # 51 tool:result        @ 2026-03-04T08:08:31.653Z (+4ms)
+- # 52 stream:context     @ 2026-03-04T08:08:31.655Z (+2ms)
+- # 53 tool:start         @ 2026-03-04T08:08:36.198Z (+4.54s)
+- # 54 tool:update        @ 2026-03-04T08:08:38.494Z (+2.30s)
+- # 55 tool:update        @ 2026-03-04T08:08:38.494Z (+0ms)
+- # 56 tool:result        @ 2026-03-04T08:08:38.507Z (+13ms)
+- # 57 stream:context     @ 2026-03-04T08:08:38.509Z (+2ms)
+- # 58 tool:start         @ 2026-03-04T08:08:42.758Z (+4.25s)
+- # 59 tool:result        @ 2026-03-04T08:08:42.766Z (+8ms)
+- # 60 stream:context     @ 2026-03-04T08:08:42.767Z (+1ms)
+- # 61 tool:start         @ 2026-03-04T08:08:45.522Z (+2.75s)
+- # 62 tool:result        @ 2026-03-04T08:08:45.528Z (+6ms)
+- # 63 stream:context     @ 2026-03-04T08:08:45.529Z (+1ms)
+- # 64 tool:start         @ 2026-03-04T08:08:48.572Z (+3.04s)
+- # 65 tool:result        @ 2026-03-04T08:08:48.594Z (+22ms)
+- # 66 stream:context     @ 2026-03-04T08:08:48.596Z (+2ms)
+- # 67 tool:start         @ 2026-03-04T08:08:50.652Z (+2.06s)
+- # 68 tool:update        @ 2026-03-04T08:08:50.855Z (+203ms)
+- # 69 tool:result        @ 2026-03-04T08:08:50.883Z (+28ms)
+- # 70 stream:context     @ 2026-03-04T08:08:50.885Z (+2ms)
+- # 71 response:assistant @ 2026-03-04T08:08:53.125Z (+2.24s)
+- # 72 response:assistant @ 2026-03-04T08:08:53.801Z (+676ms)
+- # 73 response:assistant @ 2026-03-04T08:08:54.222Z (+421ms)
+- # 74 response:assistant @ 2026-03-04T08:08:54.916Z (+694ms)
+- # 75 response:assistant @ 2026-03-04T08:08:55.420Z (+504ms)
+- # 76 response:assistant @ 2026-03-04T08:08:56.034Z (+614ms)
+- # 77 response:assistant @ 2026-03-04T08:08:56.564Z (+530ms)
+- # 78 response:assistant @ 2026-03-04T08:08:57.071Z (+507ms)
+- # 79 response:assistant @ 2026-03-04T08:08:57.589Z (+518ms)
+- # 80 session:after      @ 2026-03-04T08:08:57.679Z (+90ms)
+- # 81 response:llm_output @ 2026-03-04T08:08:57.683Z (+4ms)

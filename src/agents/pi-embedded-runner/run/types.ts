@@ -32,6 +32,32 @@ export type EmbeddedRunAttemptParams = EmbeddedRunAttemptBase & {
   legacyBeforeAgentStartResult?: PluginHookBeforeAgentStartResult;
 };
 
+export type EmbeddedRunAttemptProfileAttr = string | number | boolean;
+export type EmbeddedRunAttemptProfileDetails = Record<string, unknown>;
+
+export type EmbeddedRunAttemptProfileSpan = {
+  name: string;
+  startedAt: number;
+  endedAt: number;
+  durationMs: number;
+  status: "ok" | "error";
+  attrs?: Record<string, EmbeddedRunAttemptProfileAttr>;
+  details?: EmbeddedRunAttemptProfileDetails;
+};
+
+export type EmbeddedRunAttemptProfile = {
+  version: 1;
+  runId: string;
+  sessionId: string;
+  provider: string;
+  modelId: string;
+  startedAt: number;
+  endedAt: number;
+  durationMs: number;
+  attrs?: Record<string, EmbeddedRunAttemptProfileAttr>;
+  spans: EmbeddedRunAttemptProfileSpan[];
+};
+
 export type EmbeddedRunAttemptResult = {
   aborted: boolean;
   timedOut: boolean;
@@ -63,4 +89,5 @@ export type EmbeddedRunAttemptResult = {
   compactionCount?: number;
   /** Client tool call detected (OpenResponses hosted tools). */
   clientToolCall?: { name: string; params: Record<string, unknown> };
+  profile?: EmbeddedRunAttemptProfile;
 };

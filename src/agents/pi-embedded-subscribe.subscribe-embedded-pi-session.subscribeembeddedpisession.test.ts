@@ -106,7 +106,7 @@ describe("subscribeEmbeddedPiSession", () => {
 
   it.each(THINKING_TAG_CASES)(
     "streams <%s> reasoning via onReasoningStream without leaking into final text",
-    ({ open, close }) => {
+    async ({ open, close }) => {
       const onReasoningStream = vi.fn();
       const onBlockReply = vi.fn();
 
@@ -132,6 +132,7 @@ describe("subscribeEmbeddedPiSession", () => {
       } as AssistantMessage;
 
       emit({ type: "message_end", message: assistantMessage });
+      await Promise.resolve();
 
       expect(onBlockReply).toHaveBeenCalledTimes(1);
       expect(onBlockReply.mock.calls[0][0].text).toBe("Final answer");
@@ -149,7 +150,7 @@ describe("subscribeEmbeddedPiSession", () => {
   );
   it.each(THINKING_TAG_CASES)(
     "suppresses <%s> blocks across chunk boundaries",
-    ({ open, close }) => {
+    async ({ open, close }) => {
       const onBlockReply = vi.fn();
 
       const { emit } = createSubscribedHarness({
@@ -174,6 +175,7 @@ describe("subscribeEmbeddedPiSession", () => {
         message: { role: "assistant" },
         assistantMessageEvent: { type: "text_end" },
       });
+      await Promise.resolve();
 
       const payloadTexts = onBlockReply.mock.calls
         .map((call) => call[0]?.text)
@@ -227,6 +229,116 @@ describe("subscribeEmbeddedPiSession", () => {
       .filter((value): value is string => typeof value === "string");
     expect(streamTexts.at(-1)).toBe("Reasoning:\n_Checking files done_");
     expect(onReasoningEnd).toHaveBeenCalledTimes(1);
+  });
+
+  it("emits assistant/tool/compaction lifecycle into the profiling sink", () => {
+    const { session, emit } = createStubSessionHarness();
+    const events: Array<{ name: string; attrs?: Record<string, string | number | boolean> }> = [];
+    const spans: Array<{
+      name: string;
+      status: "ok" | "error";
+      attrs?: Record<string, string | number | boolean>;
+      details?: Record<string, unknown>;
+    }> = [];
+
+    subscribeEmbeddedPiSession({
+      session,
+      runId: "run-profile",
+      profile: {
+        event(name, attrs) {
+          events.push({ name, attrs });
+        },
+        startSpan(name, attrs) {
+          const details: Record<string, unknown> = {};
+          return {
+            end(status = "ok", endAttrs) {
+              spans.push({
+                name,
+                status,
+                attrs: { ...attrs, ...endAttrs },
+                details: Object.keys(details).length > 0 ? { ...details } : undefined,
+              });
+            },
+            setAttr() {},
+            setDetail(key, value) {
+              details[key] = value;
+            },
+          };
+        },
+      },
+    });
+
+    emit({ type: "message_start", message: { role: "assistant", content: [] } });
+    emit({
+      type: "message_end",
+      message: {
+        role: "assistant",
+        content: [
+          { type: "thinking", thinking: "Because it helps" },
+          { type: "text", text: "done" },
+        ],
+      },
+    });
+    emit({
+      type: "tool_execution_start",
+      toolName: "read",
+      toolCallId: "tool-1",
+      args: { path: "README.md" },
+    });
+    emit({
+      type: "tool_execution_end",
+      toolName: "read",
+      toolCallId: "tool-1",
+      isError: false,
+      result: { content: [{ type: "text", text: "ok" }] },
+    });
+    emit({ type: "auto_compaction_start", reason: "threshold" });
+    emit({ type: "auto_compaction_end", willRetry: false, result: { ok: true } });
+
+    expect(events.map((entry) => entry.name)).toEqual(
+      expect.arrayContaining([
+        "pi.assistant_message.start",
+        "pi.assistant_message.end",
+        "pi.tool.start",
+        "pi.tool.end",
+        "pi.compaction.start",
+        "pi.compaction.end",
+      ]),
+    );
+    expect(spans).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ name: "pi.assistant_message", status: "ok" }),
+        expect.objectContaining({ name: "pi.tool_lifecycle", status: "ok" }),
+        expect.objectContaining({ name: "pi.compaction", status: "ok" }),
+      ]),
+    );
+    expect(events).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          name: "pi.assistant_message.end",
+          attrs: expect.objectContaining({
+            textLength: 4,
+            thinkingTextLength: 16,
+          }),
+        }),
+      ]),
+    );
+    expect(spans).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          name: "pi.assistant_message",
+          status: "ok",
+          attrs: expect.objectContaining({
+            textLength: 4,
+            thinkingTextLength: 16,
+          }),
+          details: expect.objectContaining({
+            text: "done",
+            thinkingText: "Because it helps",
+          }),
+        }),
+      ]),
+    );
   });
 
   it("emits reasoning end once when native and tagged reasoning end overlap", () => {

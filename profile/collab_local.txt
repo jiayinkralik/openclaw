@@ -1,0 +1,182 @@
+File: /Users/jiayinkralik/.openclaw/logs/cache-trace.jsonl
+Parsed lines: 3330 (errors: 0)
+Matched runs: 1
+
+============================================================
+RUN SUMMARY
+- runId: 62dedc90-53db-4ec0-9279-5f9597599d00
+- sessionId: be9575d2-3e86-4f82-8a79-9b3943e0ce68
+- model: ollama/minimax-m2.5:cloud
+- window: 2026-03-04T07:42:22.912Z -> 2026-03-04T07:49:30.102Z (7m 7.2s)
+- messages: 1 {"user":1}
+- context sizes: system=23,913 history=250 prompt=250 chars
+- tokens: prompt=n/a (cache hit n/a) output=4,610 cacheWrite=0 total=37,967
+- prompt preview: [Tue 2026-03-03 23:42 PST] Can you give a brief summary of who Evan Shelhamer, Reto Achermann, Zhijian Liu, Ivan Beschastnikh are and whether you think they will get along. Make a presentation in html format for this an…
+- last user preview: [Tue 2026-03-03 23:42 PST] Can you give a brief summary of who Evan Shelhamer, Reto Achermann, Zhijian Liu, Ivan Beschastnikh are and whether you think they will get along. Make a presentation in html format for this an…
+- final output preview: Done! Created `~/Desktop/openclaw/research-team.html`. Here's a quick summary: ### The Team | Person | Role | Background | |--------|------|------------| | **Evan Shelhamer** | Incoming Asst Prof @ UBC | PhD UC Berkeley, Vector Institute, Google DeepMind | | …
+
+PHASE BREAKDOWN
+- session.load: 0ms (#1 -> #2)
+- session.sanitize: 0ms (#2 -> #3)
+- session.limit: 2ms (#3 -> #4)
+- prompt.build: 1ms (#4 -> #6)
+
+WORKFLOW (agent loops: stream:context -> next stream:context)
+- time accounting: model=6m 21.0s (89.2%) tools=3.65s (0.9%) overhead=42.58s (10.0%)
+- #1 @ +3ms (2m 19.3s): produce_user_reply assistant_text | prefill=2m 12.8s stream=0ms chunks=1 | tools=ollama_web_search(763ms) -> ollama_web_search(870ms) -> ollama_web_search(784ms) -> ollama_web_search(1.18s) overhead=2.92s
+    - gap: MODEL_PREFILL stream:context -> response:assistant 2m 12.8s (#6->#7)
+    - gap: MODEL_TO_TOOL_DISPATCH response:assistant -> tool:start 2.90s (#7->#8)
+    - gap: TOOL_LATENCY tool:start -> tool:result 1.18s (#14->#15)
+- #2 @ +2m 19.4s (48.35s): produce_user_reply assistant_text | prefill=8.77s stream=0ms chunks=1 | tools=write(5ms) overhead=39.58s
+    - gap: MODEL_TO_TOOL_DISPATCH response:assistant -> tool:start 39.58s (#17->#18)
+    - gap: MODEL_PREFILL stream:context -> response:assistant 8.77s (#16->#17)
+- #3 @ +3m 7.7s (8.10s): decide_tool tool_call:exec | decision=8.08s | tools=exec(11ms) overhead=1ms
+    - gap: MODEL_DECISION stream:context -> tool:start 8.08s (#20->#21)
+- #4 @ +3m 15.8s (3m 28.7s): decide_tool tool_call:exec | decision=3m 28.6s | tools=exec(20ms) overhead=2ms
+    - gap: MODEL_DECISION stream:context -> tool:start 3m 28.6s (#23->#24)
+- #5 @ +6m 44.5s (13.35s): decide_tool tool_call:exec | decision=13.33s | tools=exec(20ms) overhead=2ms
+    - gap: MODEL_DECISION stream:context -> tool:start 13.33s (#26->#27)
+- #6 @ +6m 57.8s (9.39s): produce_user_reply assistant_text | prefill=3.03s stream=6.29s chunks=11 maxGap=905ms | tools=none overhead=74ms
+    - gap: MODEL_PREFILL stream:context -> response:assistant 3.03s (#30->#31)
+    - gap: MODEL_STREAMING response:assistant -> response:assistant 905ms (#31->#32)
+    - gap: MODEL_STREAMING response:assistant -> response:assistant 885ms (#33->#34)
+
+TOOLS (chronological)
+- +2m 15.7s ollama_web_search call_function_e6a3nx4wyxhc_1|fc_528753_0: 763ms | status=ok | updates=0 | loop=1
+  meta: Evan Shelhamer professor researcher
+- +2m 16.5s ollama_web_search call_function_e6a3nx4wyxhc_2|fc_407740_1: 870ms | status=ok | updates=0 | loop=1
+  meta: Reto Achermann professor researcher
+- +2m 17.4s ollama_web_search call_function_e6a3nx4wyxhc_3|fc_754913_2: 784ms | status=ok | updates=0 | loop=1
+  meta: Zhijian Liu professor researcher NVIDIA UCSD
+- +2m 18.2s ollama_web_search call_function_e6a3nx4wyxhc_4|fc_432127_3: 1.18s | status=ok | updates=0 | loop=1
+  meta: Ivan Beschastnikh professor UBC
+- +3m 7.7s write call_function_54vezv8nhy12_1|fc_883140_0: 5ms | status=error | updates=0 | loop=2
+  meta: to ~/Desktop/openclaw/research-team.html (7194 chars)
+- +3m 15.8s exec call_function_b6b2jymhcary_1|fc_224142_0: 11ms | status=ok | updates=0 | loop=3
+  meta: create folder ~/Desktop/openclaw `mkdir -p ~/Desktop/openclaw`
+- +6m 44.4s exec call_function_dvs1ydueifz0_1|fc_826086_0: 20ms | status=ok | updates=0 | loop=4
+  meta: show > → run padding: 0 → run box-sizing: border-box → run } body → run background: → run min-height: 100vh → run color: → run padding: 40px → run } h1 → run font-size: 2.5rem → run margin-bottom: 10px → run background:…
+- +6m 57.8s exec call_function_9y3pqqmcikbp_1|fc_565782_0: 20ms | status=ok | updates=1 | loop=5
+  meta: list files in ~/Desktop/openclaw/ `ls -la ~/Desktop/openclaw/`
+
+TOOLS (slowest 8)
+- ollama_web_search call_function_e6a3nx4wyxhc_4|fc_432127_3: 1.18s | status=ok | loop=1
+- ollama_web_search call_function_e6a3nx4wyxhc_2|fc_407740_1: 870ms | status=ok | loop=1
+- ollama_web_search call_function_e6a3nx4wyxhc_3|fc_754913_2: 784ms | status=ok | loop=1
+- ollama_web_search call_function_e6a3nx4wyxhc_1|fc_528753_0: 763ms | status=ok | loop=1
+- exec call_function_dvs1ydueifz0_1|fc_826086_0: 20ms | status=ok | loop=4
+- exec call_function_9y3pqqmcikbp_1|fc_565782_0: 20ms | status=ok | loop=5
+- exec call_function_b6b2jymhcary_1|fc_224142_0: 11ms | status=ok | loop=3
+- write call_function_54vezv8nhy12_1|fc_883140_0: 5ms | status=error | loop=2
+
+LLM CALLS (from stream:context)
+- LLM#1: produce_user_reply assistant_text | ttft=2m 12.8s stream=0ms chunks=1 | modelActive=2m 12.8s | loopWall=2m 19.3s | msgs=1 hist=250c
+- LLM#2: produce_user_reply assistant_text | ttft=8.77s stream=0ms chunks=1 | modelActive=8.77s | loopWall=48.35s | msgs=6 hist=10,265c
+- LLM#3: decide_tool tool_call:exec | decision=8.08s | modelActive=8.08s | loopWall=8.10s | msgs=8 hist=29,087c
+- LLM#4: decide_tool tool_call:exec | decision=3m 28.6s | modelActive=3m 28.6s | loopWall=3m 28.7s | msgs=10 hist=30,873c
+- LLM#5: decide_tool tool_call:exec | decision=13.33s | modelActive=13.33s | loopWall=13.35s | msgs=12 hist=47,452c
+- LLM#6: produce_user_reply assistant_text | ttft=3.03s stream=6.29s chunks=11 maxGap=905ms | modelActive=9.31s | loopWall=9.39s | msgs=14 hist=48,530c
+
+CONTEXT EVOLUTION (at each stream:context)
+- LLM#1: msgs=1 histChars=250 roles=["user"]
+- LLM#2: msgs=6 (Δ+5) histChars=10,265 (Δ+10,015) roles=["user","assistant","toolResult","toolResult","toolResult","toolResult"]
+- LLM#3: msgs=8 (Δ+2) histChars=29,087 (Δ+18,822) roles=["user","assistant","toolResult","toolResult","toolResult","toolResult","assistant","toolResult"]
+- LLM#4: msgs=10 (Δ+2) histChars=30,873 (Δ+1,786) roles=["user","assistant","toolResult","toolResult","toolResult","toolResult","assistant","toolResult","assistant","toolResult"]
+- LLM#5: msgs=12 (Δ+2) histChars=47,452 (Δ+16,579) roles=["user","assistant","toolResult","toolResult","toolResult","toolResult","assistant","toolResult","assistant","toolResult","assistant","toolResult"]
+- LLM#6: msgs=14 (Δ+2) histChars=48,530 (Δ+1,078) roles=["user","assistant","toolResult","toolResult","toolResult","toolResult","assistant","toolResult","assistant","toolResult","assistant","toolResult","assistant","toolResult"]
+
+TIME BREAKDOWN (transition-bucketed)
+- MODEL_DECISION: total=3m 50.0s (53.8%) count=3 max=3m 28.6s at #23 stream:context -> #24 tool:start
+- MODEL_PREFILL: total=2m 24.6s (33.9%) count=3 max=2m 12.8s at #6 stream:context -> #7 response:assistant
+- MODEL_TO_TOOL_DISPATCH: total=42.48s (9.9%) count=2 max=39.58s at #17 response:assistant -> #18 tool:start
+- MODEL_STREAMING: total=6.29s (1.5%) count=10 max=905ms at #31 response:assistant -> #32 response:assistant
+- TOOL_LATENCY: total=3.65s (0.9%) count=9 max=1.18s at #14 tool:start -> #15 tool:result
+- WRAP_UP: total=74ms (0.0%) count=2 max=72ms at #41 response:assistant -> #42 session:after
+- TOOL_CHAIN: total=19ms (0.0%) count=3 max=7ms at #11 tool:result -> #12 tool:start
+- TOOL_HANDOFF: total=8ms (0.0%) count=5 max=2ms at #15 tool:result -> #16 stream:context
+- PROMPT_BUILD: total=3ms (0.0%) count=3 max=2ms at #3 session:limited -> #4 prompt:before
+- SESSION: total=0ms (0.0%) count=2 
+
+TOP WAITS (single biggest gaps, top 8)
+- +3m 15.8s MODEL_DECISION: stream:context -> tool:start 3m 28.6s (#23->#24) tool=exec
+- +3ms MODEL_PREFILL: stream:context -> response:assistant 2m 12.8s (#6->#7)
+- +2m 28.1s MODEL_TO_TOOL_DISPATCH: response:assistant -> tool:start 39.58s (#17->#18) tool=write
+- +6m 44.5s MODEL_DECISION: stream:context -> tool:start 13.33s (#26->#27) tool=exec
+- +2m 19.4s MODEL_PREFILL: stream:context -> response:assistant 8.77s (#16->#17)
+- +3m 7.7s MODEL_DECISION: stream:context -> tool:start 8.08s (#20->#21) tool=exec
+- +6m 57.8s MODEL_PREFILL: stream:context -> response:assistant 3.03s (#30->#31)
+- +2m 12.8s MODEL_TO_TOOL_DISPATCH: response:assistant -> tool:start 2.90s (#7->#8) tool=ollama_web_search
+
+COMPRESSED PATH (same-class spans merged)
+- PROMPT_BUILD: 3ms across 2 transition(s) (#3->#6)
+- MODEL_PREFILL: 2m 12.8s across 1 transition(s) (#6->#7)
+- MODEL_TO_TOOL_DISPATCH: 2.90s across 1 transition(s) (#7->#8)
+- TOOL_LATENCY: 763ms across 1 transition(s) (#8->#9)
+- TOOL_CHAIN: 5ms across 1 transition(s) (#9->#10)
+- TOOL_LATENCY: 870ms across 1 transition(s) (#10->#11)
+- TOOL_CHAIN: 7ms across 1 transition(s) (#11->#12)
+- TOOL_LATENCY: 784ms across 1 transition(s) (#12->#13)
+- TOOL_CHAIN: 7ms across 1 transition(s) (#13->#14)
+- TOOL_LATENCY: 1.18s across 1 transition(s) (#14->#15)
+- TOOL_HANDOFF: 2ms across 1 transition(s) (#15->#16)
+- MODEL_PREFILL: 8.77s across 1 transition(s) (#16->#17)
+- MODEL_TO_TOOL_DISPATCH: 39.58s across 1 transition(s) (#17->#18)
+- TOOL_LATENCY: 5ms across 1 transition(s) (#18->#19)
+- TOOL_HANDOFF: 1ms across 1 transition(s) (#19->#20)
+- MODEL_DECISION: 8.08s across 1 transition(s) (#20->#21)
+- TOOL_LATENCY: 11ms across 1 transition(s) (#21->#22)
+- TOOL_HANDOFF: 1ms across 1 transition(s) (#22->#23)
+- MODEL_DECISION: 3m 28.6s across 1 transition(s) (#23->#24)
+- TOOL_LATENCY: 20ms across 1 transition(s) (#24->#25)
+- TOOL_HANDOFF: 2ms across 1 transition(s) (#25->#26)
+- MODEL_DECISION: 13.33s across 1 transition(s) (#26->#27)
+- TOOL_LATENCY: 20ms across 2 transition(s) (#27->#29)
+- TOOL_HANDOFF: 2ms across 1 transition(s) (#29->#30)
+- MODEL_PREFILL: 3.03s across 1 transition(s) (#30->#31)
+- MODEL_STREAMING: 6.29s across 10 transition(s) (#31->#41)
+- WRAP_UP: 74ms across 2 transition(s) (#41->#43)
+
+RAW EVENTS
+- #  1 session:loaded     @ 2026-03-04T07:42:22.912Z (+n/a)
+- #  2 session:sanitized  @ 2026-03-04T07:42:22.912Z (+0ms)
+- #  3 session:limited    @ 2026-03-04T07:42:22.912Z (+0ms)
+- #  4 prompt:before      @ 2026-03-04T07:42:22.914Z (+2ms)
+- #  5 prompt:images      @ 2026-03-04T07:42:22.914Z (+0ms)
+- #  6 stream:context     @ 2026-03-04T07:42:22.915Z (+1ms)
+- #  7 response:assistant @ 2026-03-04T07:44:35.748Z (+2m 12.8s)
+- #  8 tool:start         @ 2026-03-04T07:44:38.648Z (+2.90s)
+- #  9 tool:result        @ 2026-03-04T07:44:39.411Z (+763ms)
+- # 10 tool:start         @ 2026-03-04T07:44:39.416Z (+5ms)
+- # 11 tool:result        @ 2026-03-04T07:44:40.286Z (+870ms)
+- # 12 tool:start         @ 2026-03-04T07:44:40.293Z (+7ms)
+- # 13 tool:result        @ 2026-03-04T07:44:41.077Z (+784ms)
+- # 14 tool:start         @ 2026-03-04T07:44:41.084Z (+7ms)
+- # 15 tool:result        @ 2026-03-04T07:44:42.263Z (+1.18s)
+- # 16 stream:context     @ 2026-03-04T07:44:42.265Z (+2ms)
+- # 17 response:assistant @ 2026-03-04T07:44:51.032Z (+8.77s)
+- # 18 tool:start         @ 2026-03-04T07:45:30.611Z (+39.58s)
+- # 19 tool:result        @ 2026-03-04T07:45:30.616Z (+5ms)
+- # 20 stream:context     @ 2026-03-04T07:45:30.617Z (+1ms)
+- # 21 tool:start         @ 2026-03-04T07:45:38.700Z (+8.08s)
+- # 22 tool:result        @ 2026-03-04T07:45:38.711Z (+11ms)
+- # 23 stream:context     @ 2026-03-04T07:45:38.712Z (+1ms)
+- # 24 tool:start         @ 2026-03-04T07:49:07.343Z (+3m 28.6s)
+- # 25 tool:result        @ 2026-03-04T07:49:07.363Z (+20ms)
+- # 26 stream:context     @ 2026-03-04T07:49:07.365Z (+2ms)
+- # 27 tool:start         @ 2026-03-04T07:49:20.692Z (+13.33s)
+- # 28 tool:update        @ 2026-03-04T07:49:20.711Z (+19ms)
+- # 29 tool:result        @ 2026-03-04T07:49:20.712Z (+1ms)
+- # 30 stream:context     @ 2026-03-04T07:49:20.714Z (+2ms)
+- # 31 response:assistant @ 2026-03-04T07:49:23.740Z (+3.03s)
+- # 32 response:assistant @ 2026-03-04T07:49:24.645Z (+905ms)
+- # 33 response:assistant @ 2026-03-04T07:49:25.415Z (+770ms)
+- # 34 response:assistant @ 2026-03-04T07:49:26.300Z (+885ms)
+- # 35 response:assistant @ 2026-03-04T07:49:26.792Z (+492ms)
+- # 36 response:assistant @ 2026-03-04T07:49:27.291Z (+499ms)
+- # 37 response:assistant @ 2026-03-04T07:49:28.092Z (+801ms)
+- # 38 response:assistant @ 2026-03-04T07:49:28.536Z (+444ms)
+- # 39 response:assistant @ 2026-03-04T07:49:29.351Z (+815ms)
+- # 40 response:assistant @ 2026-03-04T07:49:29.884Z (+533ms)
+- # 41 response:assistant @ 2026-03-04T07:49:30.028Z (+144ms)
+- # 42 session:after      @ 2026-03-04T07:49:30.100Z (+72ms)
+- # 43 response:llm_output @ 2026-03-04T07:49:30.102Z (+2ms)

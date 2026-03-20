@@ -71,6 +71,8 @@ export function handleMessageStart(
   // may deliver late text_end updates after message_end, which would otherwise
   // re-trigger block replies.
   ctx.resetAssistantMessageState(ctx.state.assistantTexts.length);
+  ctx.profileEvent("pi.assistant_message.start");
+  ctx.profileStartAssistantMessage();
   // Use assistant message_start as the earliest "writing" signal for typing.
   void ctx.params.onAssistantMessageStart?.();
 }
@@ -100,6 +102,7 @@ export function handleMessageUpdate(
     const thinkingDelta = typeof assistantRecord?.delta === "string" ? assistantRecord.delta : "";
     const thinkingContent =
       typeof assistantRecord?.content === "string" ? assistantRecord.content : "";
+    const partialThinking = extractAssistantThinking(msg);
     appendRawStream({
       ts: Date.now(),
       event: "assistant_thinking_stream",
@@ -111,7 +114,6 @@ export function handleMessageUpdate(
     });
     if (ctx.state.streamReasoning) {
       // Prefer full partial-message thinking when available; fall back to event payloads.
-      const partialThinking = extractAssistantThinking(msg);
       ctx.emitReasoningStream(partialThinking || thinkingContent || thinkingDelta);
     }
     if (evtType === "thinking_end") {
@@ -277,10 +279,10 @@ export function handleMessageEnd(
     text: ctx.stripBlockTags(rawText, { thinking: false, final: false }),
     messagingToolSentTexts: ctx.state.messagingToolSentTexts,
   });
+  const rawThinkingProfile =
+    extractAssistantThinking(assistantMessage) || extractThinkingFromTaggedText(rawText);
   const rawThinking =
-    ctx.state.includeReasoning || ctx.state.streamReasoning
-      ? extractAssistantThinking(assistantMessage) || extractThinkingFromTaggedText(rawText)
-      : "";
+    ctx.state.includeReasoning || ctx.state.streamReasoning ? rawThinkingProfile : "";
   const formattedReasoning = rawThinking ? formatReasoningMessage(rawThinking) : "";
   const trimmedText = text.trim();
   const parsedText = trimmedText ? parseReplyDirectives(stripTrailingDirective(trimmedText)) : null;
@@ -421,6 +423,26 @@ export function handleMessageEnd(
   if (ctx.state.blockReplyBreak === "text_end" && onBlockReply) {
     emitSplitResultAsBlockReply(ctx.consumeReplyDirectives("", { final: true }));
   }
+  const stopReason =
+    typeof (assistantMessage as { stopReason?: unknown }).stopReason === "string"
+      ? String((assistantMessage as { stopReason?: unknown }).stopReason)
+      : "unknown";
+  ctx.profileEvent("pi.assistant_message.end", {
+    stopReason,
+    textLength: rawText.length,
+    thinkingTextLength: rawThinkingProfile.length,
+  });
+  ctx.profileEndAssistantMessage(
+    {
+      stopReason,
+      textLength: rawText.length,
+      thinkingTextLength: rawThinkingProfile.length,
+    },
+    {
+      text: rawText,
+      thinkingText: rawThinkingProfile,
+    },
+  );
 
   ctx.state.deltaBuffer = "";
   ctx.state.blockBuffer = "";

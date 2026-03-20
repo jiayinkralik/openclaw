@@ -51,6 +51,10 @@ function createTestContext(): {
     emitToolSummary: vi.fn(),
     emitToolOutput: vi.fn(),
     trimMessagingToolSent: vi.fn(),
+    profileEvent: vi.fn(),
+    profileStartTool: vi.fn(),
+    profileUpdateTool: vi.fn(),
+    profileEndTool: vi.fn(),
   };
 
   return { ctx, warn, onBlockReplyFlush };

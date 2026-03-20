@@ -43,6 +43,8 @@ const BASE_RELOAD_RULES: ReloadRule[] = [
   },
   // Stuck-session warning threshold is read by the diagnostics heartbeat loop.
   { prefix: "diagnostics.stuckSessionWarnMs", kind: "none" },
+  // Attempt profiling is read dynamically by each embedded run and does not require a gateway bounce.
+  { prefix: "diagnostics.attemptProfile", kind: "none" },
   { prefix: "hooks.gmail", kind: "hot", actions: ["restart-gmail-watcher"] },
   { prefix: "hooks", kind: "hot", actions: ["reload-hooks"] },
   {

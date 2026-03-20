@@ -201,6 +201,12 @@ export type DiagnosticsCacheTraceConfig = {
   includeSystem?: boolean;
 };
 
+export type DiagnosticsAttemptProfileConfig = {
+  enabled?: boolean;
+  /** Output directory for one JSON profile per run. Default: <workspace>/debug/profile */
+  dirPath?: string;
+};
+
 export type DiagnosticsConfig = {
   enabled?: boolean;
   /** Optional ad-hoc diagnostics flags (e.g. "telegram.http"). */
@@ -209,6 +215,7 @@ export type DiagnosticsConfig = {
   stuckSessionWarnMs?: number;
   otel?: DiagnosticsOtelConfig;
   cacheTrace?: DiagnosticsCacheTraceConfig;
+  attemptProfile?: DiagnosticsAttemptProfileConfig;
 };
 
 export type WebReconnectConfig = {

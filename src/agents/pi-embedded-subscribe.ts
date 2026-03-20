@@ -87,6 +87,17 @@ export function subscribeEmbeddedPiSession(params: SubscribeEmbeddedPiSessionPar
     total: 0,
   };
   let compactionCount = 0;
+  const activeToolProfileSpans = new Map<
+    string,
+    ReturnType<NonNullable<typeof params.profile>["startSpan"]>
+  >();
+  let activeCompactionProfileSpan:
+    | ReturnType<NonNullable<typeof params.profile>["startSpan"]>
+    | undefined;
+  let activeAssistantMessageProfileSpan:
+    | ReturnType<NonNullable<typeof params.profile>["startSpan"]>
+    | undefined;
+  let assistantMessageProfileIndex = 0;
 
   const assistantTexts = state.assistantTexts;
   const toolMetas = state.toolMetas;
@@ -111,6 +122,77 @@ export function subscribeEmbeddedPiSession(params: SubscribeEmbeddedPiSessionPar
       .catch((err) => {
         log.warn(`block reply callback failed: ${String(err)}`);
       });
+  };
+  const profileEvent = (
+    name: string,
+    attrs?: Parameters<NonNullable<typeof params.profile>["event"]>[1],
+  ) => {
+    params.profile?.event(name, attrs);
+  };
+  const profileStartAssistantMessage = () => {
+    activeAssistantMessageProfileSpan?.end("error", { interrupted: true });
+    activeAssistantMessageProfileSpan = params.profile?.startSpan("pi.assistant_message", {
+      assistantMessageIndex: ++assistantMessageProfileIndex,
+    });
+  };
+  const profileEndAssistantMessage = (
+    attrs?: Parameters<NonNullable<typeof params.profile>["event"]>[1],
+    details?: Record<string, unknown>,
+  ) => {
+    if (details) {
+      for (const [key, value] of Object.entries(details)) {
+        activeAssistantMessageProfileSpan?.setDetail(key, value);
+      }
+    }
+    activeAssistantMessageProfileSpan?.end("ok", attrs);
+    activeAssistantMessageProfileSpan = undefined;
+  };
+  const profileStartCompaction = (
+    attrs?: Parameters<NonNullable<typeof params.profile>["event"]>[1],
+  ) => {
+    activeCompactionProfileSpan?.end("error", { interrupted: true });
+    activeCompactionProfileSpan = params.profile?.startSpan("pi.compaction", attrs);
+  };
+  const profileEndCompaction = (
+    status: "ok" | "error" = "ok",
+    attrs?: Parameters<NonNullable<typeof params.profile>["event"]>[1],
+  ) => {
+    activeCompactionProfileSpan?.end(status, attrs);
+    activeCompactionProfileSpan = undefined;
+  };
+  const profileStartTool = (
+    toolCallId: string,
+    attrs?: Parameters<NonNullable<typeof params.profile>["event"]>[1],
+  ) => {
+    activeToolProfileSpans.get(toolCallId)?.end("error", { interrupted: true });
+    const span = params.profile?.startSpan("pi.tool_lifecycle", attrs);
+    if (span) {
+      activeToolProfileSpans.set(toolCallId, span);
+    }
+  };
+  const profileUpdateTool = (
+    toolCallId: string,
+    attrs?: Parameters<NonNullable<typeof params.profile>["event"]>[1],
+  ) => {
+    const span = activeToolProfileSpans.get(toolCallId);
+    if (!span || !attrs) {
+      return;
+    }
+    for (const [key, value] of Object.entries(attrs)) {
+      span.setAttr(key, value);
+    }
+  };
+  const profileEndTool = (
+    toolCallId: string,
+    status: "ok" | "error" = "ok",
+    attrs?: Parameters<NonNullable<typeof params.profile>["event"]>[1],
+  ) => {
+    const span = activeToolProfileSpans.get(toolCallId);
+    if (!span) {
+      return;
+    }
+    activeToolProfileSpans.delete(toolCallId);
+    span.end(status, attrs);
   };
 
   const resetAssistantMessageState = (nextAssistantTextBaseline: number) => {
@@ -637,6 +719,14 @@ export function subscribeEmbeddedPiSession(params: SubscribeEmbeddedPiSessionPar
     incrementCompactionCount,
     getUsageTotals,
     getCompactionCount: () => compactionCount,
+    profileEvent,
+    profileStartAssistantMessage,
+    profileEndAssistantMessage,
+    profileStartCompaction,
+    profileEndCompaction,
+    profileStartTool,
+    profileUpdateTool,
+    profileEndTool,
   };
 
   const sessionUnsubscribe = params.session.subscribe(createEmbeddedPiSessionEventHandler(ctx));
@@ -671,6 +761,14 @@ export function subscribeEmbeddedPiSession(params: SubscribeEmbeddedPiSessionPar
         log.warn(`unsubscribe: compaction abort failed runId=${params.runId} err=${String(err)}`);
       }
     }
+    activeAssistantMessageProfileSpan?.end("error", { unsubscribed: true });
+    activeAssistantMessageProfileSpan = undefined;
+    activeCompactionProfileSpan?.end("error", { unsubscribed: true });
+    activeCompactionProfileSpan = undefined;
+    for (const span of activeToolProfileSpans.values()) {
+      span.end("error", { unsubscribed: true });
+    }
+    activeToolProfileSpans.clear();
     sessionUnsubscribe();
   };
 

@@ -192,6 +192,12 @@ describe("buildGatewayReloadPlan", () => {
     expect(plan.noopPaths).toContain("diagnostics.stuckSessionWarnMs");
   });
 
+  it("treats diagnostics.attemptProfile changes as no-op for gateway restart planning", () => {
+    const plan = buildGatewayReloadPlan(["diagnostics.attemptProfile.enabled"]);
+    expect(plan.restartGateway).toBe(false);
+    expect(plan.noopPaths).toContain("diagnostics.attemptProfile.enabled");
+  });
+
   it("defaults unknown paths to restart", () => {
     const plan = buildGatewayReloadPlan(["unknownField"]);
     expect(plan.restartGateway).toBe(true);
